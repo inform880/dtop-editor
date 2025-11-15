@@ -520,6 +520,20 @@ canvas {
   display: block;
 }
 
+.modal__title {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  margin-top: 8px;
+  color: var(--text);
+}
+
+.modal__subtitle {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+  justify-self: flex-end;
+}
+
 .modal__aboutcontainer {
   position: absolute;
   top: 50%;
@@ -532,4 +546,24 @@ canvas {
   background: var(--panel);
   border: 1px solid var(--line);
   color: var(--text);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 400;
+}
+
+a:hover {
+  color: #0095ff;
+  text-shadow: 0 0 4px rgba(0, 149, 255, 0.9);
+}
+
+a:active {
+  color: var(--accent);
+  text-shadow: 0 0 4px rgba(83, 179, 255, 0.25);
+}
+
+a:visited {
+  color: var(--muted);
 }
