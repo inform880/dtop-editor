@@ -1,1658 +1,313 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>OpenPose 3D – Browser Pose Editor</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Three.js (pinned) + controls -->
-    <!-- Polyfill to support import maps in every modern browser -->
-    <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
-
-    <!-- Import map: single source of truth for Three.js + addons -->
-    <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
-        "three/addons/renderers/SVGRenderer.js": "https://unpkg.com/three@0.160.0/examples/jsm/renderers/SVGRenderer.js"
+<head>
+<meta charset="utf-8"/>
+<title>OpenPose 3D – Browser Pose Editor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<!-- Three.js (pinned) + controls -->
+<!-- Polyfill to support import maps in every modern browser -->
+<script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+<!-- Import map: single source of truth for Three.js + addons -->
+<script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/",
+          "three/addons/renderers/SVGRenderer.js": "https://unpkg.com/three@0.180.0/examples/jsm/renderers/SVGRenderer.js"
+        }
       }
-    }
-    </script>
-    <style>
-      :root {
-        --bg: #0f1117;
-        --panel: #141824;
-        --panel2: #0e1220;
-        --text: #e6e6e6;
-        --muted: #a0a7b4;
-        --accent: #53b3ff;
-        --ok: #30c48d;
-        --warn: #ffbd4a;
-        --danger: #ff5f64;
-        --line: #1c2333;
-        --left-w: 320px;
-        --right-w: 360px;
-        --top-h: 48px;
-        --radius: 10px;
-        --shadow: 0 10px 30px rgba(0, 0, 0, .25);
-        --font: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-      }
-
-      * {
-        box-sizing: border-box
-      }
-
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-        background: var(--bg);
-        color: var(--text);
-        font-family: var(--font);
-      }
-
-      .app {
-        display: grid;
-        height: 100%;
-        grid-template-columns: var(--left-w) 1fr var(--right-w);
-        grid-template-rows: var(--top-h) 1fr;
-        grid-template-areas: "top top top" "left center right";
-        gap: 10px;
-        padding: 10px;
-      }
-
-      .topbar {
-        grid-area: top;
-        background: var(--panel);
-        border: 1px solid var(--line);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 0 10px;
-        border-radius: var(--radius);
-      }
-
-      .left {
-        grid-area: left;
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
-        overflow: auto;
-      }
-
-      .center {
-        grid-area: center;
-        position: relative;
-        background: var(--panel2);
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
-        overflow: hidden;
-      }
-
-      .right {
-        grid-area: right;
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
-        overflow: auto;
-      }
-
-      .group {
-        padding: 12px 12px 6px;
-        border-bottom: 1px dashed var(--line)
-      }
-
-      .group h3 {
-        margin: .3rem 0 .6rem;
-        font-size: .95rem;
-        color: #dfe6f5;
-        display: flex;
-        align-items: center;
-        gap: .5rem
-      }
-
-      .row {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        margin: 6px 0
-      }
-
-      .row label {
-        min-width: 84px;
-        color: var(--muted);
-        font-size: .85rem
-      }
-
-      input[type="number"],
-      input[type="text"],
-      select {
-        background: #0d1220;
-        border: 1px solid #1b2335;
-        border-radius: 8px;
-        padding: 6px 8px;
-        color: var(--text);
-        width: 100%;
-      }
-
-      input[type="range"] {
-        width: 100%
-      }
-
-      button {
-        background: #121a2c;
-        border: 1px solid #1b2335;
-        color: var(--text);
-        border-radius: 8px;
-        padding: 6px 10px;
-        cursor: pointer;
-      }
-
-      button:hover {
-        border-color: #2a3a5f
-      }
-
-      button[data-state="active"] {
-        background: #17233d;
-        border-color: var(--accent)
-      }
-
-      .split {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px
-      }
-
-      .muted {
-        color: var(--muted)
-      }
-
-      .toolbar {
-        display: flex;
-        gap: 6px;
-        align-items: center
-      }
-
-      .divider {
-        width: 1px;
-        height: 28px;
-        background: #1c2333;
-        margin: 0 6px
-      }
-
-      .pill {
-        font-size: .8rem;
-        padding: 2px 6px;
-        border: 1px solid #26314a;
-        border-radius: 999px;
-        color: var(--muted)
-      }
-
-      .status {
-        margin-left: auto;
-        color: var(--muted);
-        font-size: .85rem
-      }
-
-      .viewport {
-        position: absolute;
-        inset: 0;
-        z-index: 2
-      }
-
-      canvas {
-        display: block
-      }
-
-      .overlay {
-        position: absolute;
-        inset: 0;
-        z-index: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        pointer-events: none;
-        /* allow 3D interactions through the image */
-      }
-
-      .overlay img {
-        max-width: none;
-        opacity: .5;
-        transform-origin: center center;
-      }
-
-      .legend {
-        position: absolute;
-        right: 10px;
-        bottom: 10px;
-        z-index: 3;
-        font-size: .8rem;
-        background: rgba(10, 12, 20, .8);
-        padding: 8px 10px;
-        border: 1px solid #1b2335;
-        border-radius: 8px;
-        color: #c8d2e6
-      }
-
-      .tree {
-        padding: 10px
-      }
-
-      .tree ul {
-        list-style: none;
-        padding-left: 16px;
-        margin: 0
-      }
-
-      .tree li {
-        margin: 2px 0
-      }
-
-      .tree button {
-        background: transparent;
-        border: none;
-        padding: 2px 4px;
-        color: var(--text);
-        cursor: pointer;
-        border-radius: 6px
-      }
-
-      .tree button:hover {
-        background: #151c30
-      }
-
-      .tree .sel {
-        background: #1a2745;
-        border: 1px solid #22355c
-      }
-
-      .kv {
-        display: grid;
-        grid-template-columns: 1fr 64px 64px 64px;
-        gap: 6px;
-        align-items: center
-      }
-
-      .kv small {
-        color: var(--muted)
-      }
-
-      .chip {
-        padding: 2px 6px;
-        background: #11182a;
-        border: 1px solid #1b2335;
-        border-radius: 999px;
-        font-size: .75rem;
-        color: #c2cbe0
-      }
-
-      .thumbs {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px
-      }
-
-      .thumb {
-        background: #0b1020;
-        border: 1px solid #1b2335;
-        border-radius: 8px;
-        overflow: hidden;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        min-height: 140px;
-      }
-
-      .thumb img {
-        width: 100%;
-        height: 110px;
-        object-fit: cover;
-        background: #0b0f1c
-      }
-
-      .thumb .cap {
-        padding: 6px 8px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 6px
-      }
-
-      .thumb .cap span {
-        font-size: .8rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap
-      }
-
-      .danger {
-        color: var(--danger)
-      }
-
-      .green {
-        color: var(--ok)
-      }
-
-      .note {
-        font-size: .8rem;
-        color: #b1b9cb
-      }
-
-      .hidden {
-        display: none !important
-      }
-
-      .right .group:last-child {
-        border-bottom: none
-      }
-
-      .kbd {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-        font-size: .78rem;
-        background: #0c1222;
-        border: 1px solid #1a2541;
-        padding: 1px 6px;
-        border-radius: 6px;
-        color: #c7d5f0
-      }
-
-      .small {
-        font-size: .8rem
-      }
-    </style>
-  </head>
-  <body>
-    <div class="app">
-      <!-- Top toolbar -->
-      <div class="topbar">
-        <div class="toolbar">
-          <button id="mode-translate" title="Translate (W)">Translate</button>
-          <button id="mode-rotate" data-state="active" title="Rotate (E)">Rotate</button>
-          <div class="divider"></div>
-          <button id="space-local" data-state="active" title="Local space">Local</button>
-          <button id="space-world" title="World space">World</button>
-          <div class="divider"></div>
-          <button id="reset-pose" title="Reset pose">Reset</button>
-          <button id="mirror-pose" title="Mirror pose across X">Mirror Pose</button>
-          <div class="divider"></div>
-          <button id="symmetry" title="Symmetry">Symmetry</button>
-          <div class="divider"></div>
-          <button id="cam-persp" data-state="active" title="Perspective camera">Persp</button>
-          <button id="cam-ortho-front" title="Orthographic Front lock">Ortho Front</button>
-          <button id="cam-ortho-side" title="Orthographic Side lock">Ortho Side</button>
-          <div class="divider"></div>
-          <button id="toggle-grid" data-state="active" title="Toggle grid">Grid</button>
-          <button id="screenshot" title="Save viewport PNG">Screenshot</button>
-        </div>
-        <div class="status" id="status">Ready.</div>
-      </div>
-
-      <!-- Left: hierarchy + inspector -->
-      <div class="left">
-        <div class="group">
-          <h3>Skeleton Hierarchy</h3>
-          <div class="tree" id="tree"></div>
-        </div>
-        <div class="group" id="inspector">
-          <h3>Joint Inspector <span id="inspector-joint" class="pill">-</span></h3>
-          <div class="row small"><span class="muted">Hint:</span> <span class="note">Rotate with
-              gizmo or edit numbers. <span class="kbd">E</span> rotate, <span class="kbd">W</span>
-              translate.</span></div>
-          <div class="row">
-            <label>Rotation (°)</label>
-            <div class="split">
-              <input type="number" step="1" id="rot-x" placeholder="Pitch X" />
-              <input type="number" step="1" id="rot-y" placeholder="Yaw Y" />
-              <input type="number" step="1" id="rot-z" placeholder="Roll Z" />
-            </div>
+</script>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<div class="app">
+  <!-- Top toolbar -->
+  <div class="topbar">
+    <div class="toolbar">
+      <button id="mode-translate" title="Translate (W)">Translate</button>
+      <button
+        id="mode-rotate"
+        data-state="active"
+        title="Rotate (E)"
+      >
+        Rotate
+      </button>
+      <div class="divider"></div>
+      <button
+        id="space-local"
+        data-state="active"
+        title="Local space"
+      >
+        Local
+      </button>
+      <button id="space-world" title="World space">World</button>
+      <div class="divider"></div>
+      <button id="reset-pose" title="Reset pose">Reset</button>
+      <div class="divider"></div>
+      <button id="symmetry" title="Symmetry">Symmetry</button>
+      <div class="divider"></div>
+      <button
+        id="cam-persp"
+        data-state="active"
+        title="Perspective camera"
+      >
+        Persp
+      </button>
+      <button id="cam-ortho-front" title="Orthographic Front lock">
+        Ortho Front
+      </button>
+      <button id="cam-ortho-side" title="Orthographic Side lock">
+        Ortho Side
+      </button>
+      <div class="divider"></div>
+      <button
+        id="toggle-grid"
+        data-state="active"
+        title="Toggle grid"
+      >
+        Grid
+      </button>
+      <button id="screenshot" title="Save viewport PNG">Screenshot</button>
+    </div>
+    <div class="status" id="status">Ready.</div>
+  </div>
+  <!-- Left: hierarchy + inspector -->
+  <div class="left">
+    <div class="group" id="inspector">
+      <h3>
+        Joint Inspector
+      </h3>
+      <span id="inspector-joint" class="pill">-</span>
+      <div class="row">
+        <label>Rotation (°)</label>
+        <div class="split">
+          <label class="note">X</label>
+          <div>
+            <span class="chip" id="lim-x">limits: *</span>
+            <input
+              type="number"
+              step="1"
+              id="rot-x"
+              placeholder="Pitch X"
+            />
           </div>
-          <div class="row small" id="limit-readout">Limits: <span class="chip" id="lim-x">X -</span>
-            <span class="chip" id="lim-y">Y -</span> <span class="chip" id="lim-z">Z -</span>
+          <label class="note">Y</label>
+          <div>
+            <span class="chip" id="lim-y">limits: *</span>
+            <input
+              type="number"
+              step="1"
+              id="rot-y"
+              placeholder="Yaw Y"
+            />
           </div>
-          <div class="row">
-            <label>Position</label>
-            <div class="split">
-              <input type="number" step="0.001" id="pos-x" placeholder="X" />
-              <input type="number" step="0.001" id="pos-y" placeholder="Y" />
-              <input type="number" step="0.001" id="pos-z" placeholder="Z" />
-            </div>
+          <label class="note">Z</label>
+          <div>
+            <span class="chip" id="lim-z">limits: *</span>
+            <input
+              type="number"
+              step="1"
+              id="rot-z"
+              placeholder="Roll Z"
+            />
           </div>
-          <div class="row small"><span class="muted">Tip:</span> <span class="note">Only <b>Root</b>
-              is freely translatable; others are locked to preserve bone lengths.</span></div>
         </div>
       </div>
-
-      <!-- Center: 3D viewport + overlay -->
-      <div class="center">
-        <div class="overlay"><img id="ref-img" class="hidden" alt="reference" /></div>
-        <div id="viewport" class="viewport"></div>
-      </div>
-
-      <!-- Right: library, IK, reference overlay, IO -->
-      <div class="right">
-        <div class="group">
-          <h3>Pose Library</h3>
-          <div class="row">
-            <input id="pose-name" type="text" placeholder="Pose name (e.g., T-Pose)" />
-            <button id="save-pose">Save Pose</button>
-          </div>
-          <div class="thumbs" id="thumbs"></div>
-          <div class="row small"><span class="muted">Note:</span> Saved locally in
-            <code>localStorage</code>.
-          </div>
-        </div>
-
-        <div class="group">
-          <h3>Import & Export</h3>
-          <div class="split">
-            <button id="export-library">Export JSON</button>
-            <label class="hidden" for="import-library"></label>
-            <input id="import-library" type="file" accept="application/json" />
-          </div>
-          <div class="row small"><span class="muted">Tip:</span> Share pose packs with your team.
-          </div>
-        </div>
-        <div class="group">
-          <h3>OpenPose Export</h3>
-          <div class="row">
-            <button id="export-openpose">Export OpenPose (Draw Things)</button>
-          </div>
-          <div class="row small">
-            <label>Normalize</label>
-            <input id="openpose-normalize" type="checkbox" checked />
-          </div>
-        </div>
-        <div class="group">
-          <h3>FK / IK & Symmetry</h3>
-          <div class="row"><label>Left Arm</label><select id="ik-left-arm">
-              <option value="FK">FK</option>
-              <option value="IK">IK</option>
-            </select></div>
-          <div class="row"><label>Right Arm</label><select id="ik-right-arm">
-              <option value="FK">FK</option>
-              <option value="IK">IK</option>
-            </select></div>
-          <div class="row"><label>Left Leg</label><select id="ik-left-leg">
-              <option value="FK">FK</option>
-              <option value="IK">IK</option>
-            </select></div>
-          <div class="row"><label>Right Leg</label><select id="ik-right-leg">
-              <option value="FK">FK</option>
-              <option value="IK">IK</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="group">
-          <h3>Reference Image Overlay</h3>
-          <div class="row">
-            <input id="ref-file" type="file" accept="image/*" />
-          </div>
-          <div class="row"><label>Opacity</label><input id="ref-opacity" type="range" min="0"
-                   max="1" step="0.01" value="0.5" /></div>
-          <div class="row"><label>Scale</label><input id="ref-scale" type="range" min="0.1" max="3"
-                   step="0.01" value="1.0" /></div>
-          <div class="row"><label>Offset X</label><input id="ref-ox" type="range" min="-500"
-                   max="500" step="1" value="0" /></div>
-          <div class="row"><label>Offset Y</label><input id="ref-oy" type="range" min="-500"
-                   max="500" step="1" value="0" /></div>
-          <div class="row small"><span class="muted">Lock view:</span> <span class="kbd">Ortho Front
-              / Side</span> in the top bar.</div>
-        </div>
-
-        <div class="group">
-          <h3>Controls & Shortcuts</h3>
-          <div class="row">
-
-            <div>Orbit: drag, Pan: right‑drag, Zoom: wheel</div>
-            <div>Gizmo: <span class="kbd">W</span> Translate, <span class="kbd">E</span> Rotate
-            </div>
-            <div>Frame Selected: <span class="kbd">F</span> • Grid: <span class="kbd">G</span></div>
-            <span class="note">
-              <span class="kbd">W</span> Translate • <span class="kbd">E</span> Rotate • <span
-                    class="kbd">F</span> Frame Selected •
-              <span class="kbd">G</span> Grid • <span class="kbd">Ctrl/Cmd + S</span> Save Pose
-            </span>
-          </div>
+      <div class="row">
+        <label>Transform</label>
+        <div class="split">
+          <label class="note">X</label>
+          <input
+            type="number"
+            step="0.01"
+            id="pos-x"
+            placeholder="X"
+          />
+          <label class="note">Y</label>
+          <input
+            type="number"
+            step="0.01"
+            id="pos-y"
+            placeholder="Y"
+          />
+          <label class="note">Z</label>
+          <input
+            type="number"
+            step="0.01"
+            id="pos-z"
+            placeholder="Z"
+          />
         </div>
       </div>
     </div>
-    <script type="module">
-      import * as THREE from 'three';
-      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-      import { TransformControls } from 'three/addons/controls/TransformControls.js';
-      import { SVGRenderer } from 'three/addons/renderers/SVGRenderer.js';
-      (() => {
-
-        // ---------- Utilities ----------
-        const DEG = Math.PI / 180, RAD = 180 / Math.PI;
-        const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
-        const byId = id => document.getElementById(id);
-        const setStatus = (t) => byId('status').textContent = t;
-
-        // ---------- Scene ----------
-        const viewportEl = byId('viewport');
-        { {/*  const renderer = new SVGRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });  */ } }
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.setSize(viewportEl.clientWidth, viewportEl.clientHeight);
-        renderer.setClearColor(0x000000, 0); // transparent to show reference image
-        viewportEl.appendChild(renderer.domElement);
-
-        // Perspective & Ortho cameras
-        const persp = new THREE.PerspectiveCamera(45, viewportEl.clientWidth / viewportEl.clientHeight, 0.01, 100);
-        persp.position.set(2.2, 1.8, 2.6);
-
-        const orthoSize = 2.2;
-        const ortho = new THREE.OrthographicCamera(-orthoSize, orthoSize, orthoSize, -orthoSize, -10, 100);
-        ortho.position.set(0, 1.7, 3);
-        ortho.lookAt(0, 1, 0);
-
-        let camera = persp;
-        let needsRender = true;
-
-        const scene = new THREE.Scene();
-
-        // Lights
-        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-        const key = new THREE.DirectionalLight(0xffffff, 0.9);
-        key.position.set(3, 5, 3);
-        scene.add(key);
-        const rim = new THREE.DirectionalLight(0xffffff, 0.3);
-        rim.position.set(-3, 3, -3);
-        scene.add(rim);
-
-        // Grid & axes
-        const grid = new THREE.GridHelper(10, 20, 0x26406d, 0x1c2947);
-        grid.position.y = 0;
-        scene.add(grid);
-        let gridVisible = true;
-
-        const axes = new THREE.AxesHelper(0.25);
-        axes.position.set(0, 0, 0);
-        scene.add(axes);
-
-        // Orbit + Transform controls
-        const orbit = new OrbitControls(camera, renderer.domElement);
-        orbit.enableDamping = true;
-        orbit.target.set(0, 1.0, 0);
-
-        const tctrl = new TransformControls(camera, renderer.domElement);
-        tctrl.setMode('rotate');
-        tctrl.setSize(0.8);
-        tctrl.addEventListener('dragging-changed', e => orbit.enabled = !e.value);
-        scene.add(tctrl);
-
-        // Repaint whenever controls change camera or gizmo state
-        orbit.addEventListener('change', () => markPoseDirty());
-        tctrl.addEventListener('change', () => markPoseDirty());
-        renderer.domElement.addEventListener('wheel', () => markPoseDirty(), { passive: true });
-        renderer.domElement.style.touchAction = 'none'; // better touch behavior
-
-        // Picking
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        renderer.domElement.addEventListener('pointerdown', onPointerDown);
-
-        // ---------- Skeleton definition ----------
-        /**
-         * We model an OpenPose-like skeleton using THREE.Bone. All bones use local +Y as the "bone axis",
-         * which makes IK simpler (we align local +Y to the child direction). Left/right bones are mirrored along world X.
-         * Units are meters. Default pose is relaxed A-pose.
-         */
-        const boneSpec = [
-          // name, parent, [x,y,z]
-          ['Root', null, [0, 1.0, 0]],
-          // pelvis & spine
-          ['Pelvis', 'Root', [0, 0.05, 0]],
-          ['Spine1', 'Pelvis', [0, 0.12, 0]],
-          ['Spine2', 'Spine1', [0, 0.12, 0]],
-          ['Neck', 'Spine2', [0, 0.12, 0]],
-          ['Head', 'Neck', [0, 0.18, 0]],
-          // clavicles / shoulders
-          ['LeftClavicle', 'Spine2', [0.12, 0.08, 0]],
-          ['LeftShoulder', 'LeftClavicle', [0.13, 0.00, 0]],
-          ['LeftElbow', 'LeftShoulder', [0.00, -0.30, 0]],
-          ['LeftWrist', 'LeftElbow', [0.00, -0.26, 0]],
-          ['LeftHand', 'LeftWrist', [0.00, -0.10, 0]],
-          ['RightClavicle', 'Spine2', [-0.12, 0.08, 0]],
-          ['RightShoulder', 'RightClavicle', [-0.13, 0.00, 0]],
-          ['RightElbow', 'RightShoulder', [0.00, -0.30, 0]],
-          ['RightWrist', 'RightElbow', [0.00, -0.26, 0]],
-          ['RightHand', 'RightWrist', [0.00, -0.10, 0]],
-          // hips / legs
-          ['LeftHip', 'Pelvis', [0.10, -0.03, 0]],
-          ['LeftKnee', 'LeftHip', [0.00, -0.42, 0]],
-          ['LeftAnkle', 'LeftKnee', [0.00, -0.42, 0]],
-          ['LeftFoot', 'LeftAnkle', [0.08, 0.00, 0.12]], // small forward foot
-          ['RightHip', 'Pelvis', [-0.10, -0.03, 0]],
-          ['RightKnee', 'RightHip', [0.00, -0.42, 0]],
-          ['RightAnkle', 'RightKnee', [0.00, -0.42, 0]],
-          ['RightFoot', 'RightAnkle', [-0.08, 0.00, 0.12]],
-        ];
-
-        const jointLimits = {
-          // Cervical complex split across two bones (Neck does the heavy lifting; Head adds fine motion)
-          Neck: { x: [-60, 45], y: [-80, 80], z: [-45, 45] },  // flex 45, ext 60, rot 80, side 45
-          Head: { x: [-25, 25], y: [-40, 40], z: [-25, 25] },
-
-          // Thoracic/Lumbar distributed over two segments
-          Spine1: { x: [-30, 20], y: [-20, 20], z: [-15, 15] },  // per segment
-          Spine2: { x: [-30, 20], y: [-25, 25], z: [-15, 15] },
-
-          // Optional pelvis rotation (small but useful for posing). If you prefer none, remove this entry.
-          Pelvis: { x: [-15, 15], y: [-30, 30], z: [-15, 15] },
-
-          // Clavicle (SC/AC complex) - contributes to overhead reach
-          LeftClavicle: { x: [-35, 20], y: [-25, 25], z: [-25, 25] },
-          RightClavicle: { x: [-35, 20], y: [-25, 25], z: [-25, 25] },
-
-          // Glenohumeral shoulder (use clavicle + shoulder together for full overhead)
-          LeftShoulder: { x: [-140, 90], y: [-90, 90], z: [-90, 110] },
-          RightShoulder: { x: [-140, 90], y: [-90, 90], z: [-90, 110] },
-
-          // Elbow: primary hinge with tiny laxity; allow slight hyperextension for realism
-          LeftElbow: { x: [-155, 5], y: [-10, 10], z: [-10, 10] },
-          RightElbow: { x: [-155, 5], y: [-10, 10], z: [-10, 10] },
-
-          // Wrist: flex/extend, radial/ulnar deviation, plus axial “twist” if you lack a forearm-twist bone
-          LeftWrist: { x: [-70, 80], y: [-85, 85], z: [-15, 30] },  // y used for pron/sup surrogate
-          RightWrist: { x: [-70, 80], y: [-85, 85], z: [-15, 30] },
-
-          // Hip: ball-and-socket
-          LeftHip: { x: [-140, 70], y: [-60, 45], z: [-30, 60] },
-          RightHip: { x: [-140, 70], y: [-60, 45], z: [-60, 30] },
-
-          // Knee: near-hinge; small axial/varus/valgus available (esp. when flexed)
-          LeftKnee: { x: [-5, 155], y: [-10, 10], z: [-10, 10] },
-          RightKnee: { x: [-5, 155], y: [-10, 10], z: [-10, 10] },
-
-          // Ankle (talocrural) + subtalar approximation (more inversion than eversion)
-          LeftAnkle: { x: [-50, 20], y: [-20, 20], z: [-10, 25] },
-          RightAnkle: { x: [-50, 20], y: [-20, 20], z: [-10, 25] },
-
-          // Include end effectors too (helpful if you rotate them directly)
-          LeftFoot: { x: [-20, 20], y: [-20, 20], z: [-30, 30] },
-          RightFoot: { x: [-20, 20], y: [-20, 20], z: [-30, 30] },
-          LeftHand: { x: [-30, 30], y: [-45, 45], z: [-30, 30] },
-          RightHand: { x: [-30, 30], y: [-45, 45], z: [-30, 30] },
-        };
-
-        // Build skeleton (Bones + helper spheres for picking)
-        const bonesByName = new Map();
-        const rootObj = new THREE.Object3D();
-        rootObj.name = 'Armature';
-        scene.add(rootObj);
-
-        // Bone creation
-        for (const [name, parentName, pos] of boneSpec) {
-          const b = new THREE.Bone();
-
-          b.name = name;
-          b.position.fromArray(pos);
-          b.rotation.set(0, 0, 0, "XYZ");
-          bonesByName.set(name, b);
-          if (parentName) {
-            bonesByName.get(parentName).add(b);
-          } else {
-            rootObj.add(b);
-          }
-        }
-
-        // After building the skeleton and parenting bones:
-        for (const [name, b] of bonesByName) {
-          // Default axis is +Y; if the bone has a child, use that offset direction.
-          const childBone = b.children.find(c => c.isBone);
-          const axis = new THREE.Vector3(0, 1, 0);
-          if (childBone) {
-            axis.copy(childBone.position).normalize();
-            if (axis.lengthSq() < 1e-9) axis.set(0, 1, 0);
-          }
-          b.userData.bindAxisLocal = axis;   // e.g., arms/legs become (0,-1,0)
-        }
-
-        // --- Pole vector storage (parent-local so it moves with the torso/clavicle/pelvis) ---
-        const poleByLimb = {}; // limb -> { parent: Object3D, nLocal: Vector3 }
-
-        // Which bones form each limb is already defined by your chainForLimb(...)
-        function initPoleForLimb(limb) {
-          const chain = chainForLimb(limb);
-          const [b0, b1, b2] = chain.map(n => bonesByName.get(n));
-          if (!b0 || !b1 || !b2) return;
-
-          // Make sure world matrices are current
-          scene.updateMatrixWorld(true);
-
-          const p0 = b0.getWorldPosition(new THREE.Vector3());
-          const p1 = b1.getWorldPosition(new THREE.Vector3());
-          const p2 = b2.getWorldPosition(new THREE.Vector3());
-
-          // Bind-plane normal (points which way the elbow/knee "likes" to bend)
-          const nWorld = new THREE.Vector3()
-            .crossVectors(
-              new THREE.Vector3().subVectors(p1, p0),
-              new THREE.Vector3().subVectors(p2, p1)
-            );
-
-          if (nWorld.lengthSq() < 1e-8) nWorld.set(0, 0, 1); // fallback "forward"
-          nWorld.normalize();
-
-          // Store it in the parent’s local space so it follows the torso/hips naturally
-          const parent = b0.parent;
-          const parentWQInv = parent.getWorldQuaternion(new THREE.Quaternion()).invert();
-          const nLocal = nWorld.clone().applyQuaternion(parentWQInv);
-
-          poleByLimb[limb] = { parent, nLocal };
-        }
-
-        // Initialize for all 4 limbs
-        ['LeftArm', 'RightArm', 'LeftLeg', 'RightLeg'].forEach(initPoleForLimb);
-
-        // Helper: recover the pole direction in WORLD space at solve time
-        function getPoleDirWorld(limb) {
-          const rec = poleByLimb[limb];
-          if (!rec) return new THREE.Vector3(0, 0, 1);
-          const wq = rec.parent.getWorldQuaternion(new THREE.Quaternion());
-          return rec.nLocal.clone().applyQuaternion(wq).normalize();
-        }
-
-
-        // Skeleton visual helper (lines)
-        const skelHelper = new THREE.SkeletonHelper(rootObj);
-        skelHelper.material.linewidth = 30; // ignored on most browsers, but harmless
-        skelHelper.material.color = new THREE.Color(0x5aaaff);
-        scene.add(skelHelper);
-
-        // Joints as clickable spheres
-        const jointGroup = new THREE.Group();
-        jointGroup.name = "JointSpheres";
-        scene.add(jointGroup);
-
-        const jointSpheres = new Map();
-        for (const [name, b] of bonesByName) {
-          const sphere = new THREE.Mesh(
-            new THREE.SphereGeometry(0.018, 16, 12),
-            new THREE.MeshStandardMaterial({ color: name.includes('Left') ? 0x6be28c : name.includes('Right') ? 0xe26b9e : 0x8aa3ff, metalness: 0.1, roughness: 0.6 })
-          );
-          sphere.userData.isJoint = true;
-          sphere.userData.boneName = name;
-          // Attach to bone so it inherits transform
-          b.add(sphere);
-          jointSpheres.set(name, sphere);
-        }
-
-        function addIKHandle(endBoneName) {
-          const m = new THREE.Mesh(
-            new THREE.BoxGeometry(0.04, 0.04, 0.04),
-            new THREE.MeshStandardMaterial({ color: 0x2ed17a, emissive: 0x0, metalness: 0.2, roughness: 0.4 })
-          );
-          m.visible = false; // shown only in IK mode
-          m.userData.ikFor = endBoneName;
-          scene.add(m);
-          // place initially at end-effector
-          const eb = bonesByName.get(endBoneName);
-          const p = eb.getWorldPosition(new THREE.Vector3());
-          m.position.copy(p);
-          return m;
-        }
-
-        // IK handles (green cubes) at hands & feet
-        const ikHandles = {
-          'LeftArm': addIKHandle('LeftWrist'),
-          'RightArm': addIKHandle('RightWrist'),
-          'LeftLeg': addIKHandle('LeftAnkle'),
-          'RightLeg': addIKHandle('RightAnkle'),
-        };
-
-        const bindLocalPos = new Map();
-        for (const [name, b] of bonesByName) bindLocalPos.set(name, b.position.clone());
-
-        // IK state (FK by default)
-        const ikMode = { 'LeftArm': 'FK', 'RightArm': 'FK', 'LeftLeg': 'FK', 'RightLeg': 'FK' };
-
-        // Transform controls attach/detach
-        let selectedBone = null;
-        function selectBoneByName(name) {
-          const b = bonesByName.get(name) || null;
-          selectedBone = b;
-          // update joint sphere highlight
-          for (const [n, mesh] of jointSpheres) {
-            mesh.material.emissive = new THREE.Color(n === name ? 0x3856ff : 0);
-          }
-          // Attach gizmo to the selected bone (unless null)
-          if (b) {
-            tctrl.attach(b);
-            updateInspectorUI();
-            setStatus(`Selected: ${name}`);
-          } else {
-            tctrl.detach();
-            setStatus('No joint selected');
-          }
-          updateTreeSelection(name);
-        }
-
-
-        function alignMidToPole(p0, p1, p2, poleDirWorld) {
-          const axis = new THREE.Vector3().subVectors(p2, p0);
-          const len = axis.length();
-          if (len < 1e-6) return p1.clone();
-          axis.multiplyScalar(1 / len);
-
-          // Desired plane normal = pole projected onto plane ⟂ axis
-          const nDes = poleDirWorld.clone().sub(axis.clone().multiplyScalar(poleDirWorld.dot(axis)));
-          if (nDes.lengthSq() < 1e-10) return p1.clone();
-          nDes.normalize();
-
-          // Current bend normal from the triangle (p0, p1, p2)
-          const v0 = new THREE.Vector3().subVectors(p1, p0);
-          const v1 = new THREE.Vector3().subVectors(p2, p1);
-          let nCur = new THREE.Vector3().crossVectors(v0, v1);
-          if (nCur.lengthSq() < 1e-12) {
-            // Place p1 on the pole side at the same axial distance & radius as current
-            const to1 = new THREE.Vector3().subVectors(p1, p0);
-            const axial = axis.clone().multiplyScalar(to1.dot(axis));
-            const radial = to1.clone().sub(axial);
-            const r = radial.length();
-            if (r < 1e-9) return p1.clone();
-            const nDes = poleDirWorld.clone().sub(axis.clone().multiplyScalar(poleDirWorld.dot(axis))).normalize();
-            // Build an orthonormal basis (u = nDes × axis, v = nDes)
-            const u = new THREE.Vector3().crossVectors(nDes, axis).normalize();
-            const v = nDes; // already ⟂ axis
-            const radialOnPole = u.multiplyScalar(radial.length());  // rotate to pole side
-            return new THREE.Vector3().addVectors(p0, axial).add(radialOnPole);
-          }
-          nCur.sub(axis.clone().multiplyScalar(nCur.dot(axis))).normalize();
-
-          // Signed angle from current to desired normal around axis
-          const dot = THREE.MathUtils.clamp(nCur.dot(nDes), -1, 1);
-          let ang = Math.acos(dot);
-          const sgn = Math.sign(new THREE.Vector3().crossVectors(nCur, nDes).dot(axis)) || 1;
-          ang *= sgn;
-
-          // Rotate p1 around the axis (through p0)
-          const q = new THREE.Quaternion().setFromAxisAngle(axis, ang);
-          const p1r = new THREE.Vector3().subVectors(p1, p0).applyQuaternion(q).add(p0);
-          return p1r;
-        }
-
-        // Transform controls mode + space
-        function setMode(mode) { tctrl.setMode(mode); updateToolbarMode(mode); }
-        function updateToolbarMode(mode) {
-          byId('mode-translate').dataset.state = mode === 'translate' ? 'active' : '';
-          byId('mode-rotate').dataset.state = mode === 'rotate' ? 'active' : '';
-        }
-        function setSpace(space) {
-          tctrl.setSpace(space);
-          byId('space-local').dataset.state = space === 'local' ? 'active' : '';
-          byId('space-world').dataset.state = space === 'world' ? 'active' : '';
-        }
-
-        // ---------- Hierarchy UI ----------
-        function buildTree() {
-          const treeEl = byId('tree');
-          treeEl.innerHTML = "";
-          function buildNode(name) {
-            const b = bonesByName.get(name);
-            const li = document.createElement('li');
-
-            const btn = document.createElement('button');
-            btn.textContent = name;
-            btn.onclick = () => selectBoneByName(name);
-            btn.id = `tree-${name}`;
-            li.appendChild(btn);
-
-            const kids = b.children.filter(c => c.isBone);
-            if (kids.length) {
-              const ul = document.createElement('ul');
-              for (const k of kids) {
-                ul.appendChild(buildNode(k.name));
-              }
-              li.appendChild(ul);
-            }
-            return li;
-          }
-          const rootBone = bonesByName.get('Root');
-          const ul = document.createElement('ul');
-          ul.appendChild(buildNode(rootBone.name));
-          treeEl.appendChild(ul);
-        }
-        function updateTreeSelection(name) {
-          for (const [n, _] of bonesByName) {
-            const el = byId(`tree-${n}`);
-            if (el) {
-              el.classList.toggle('sel', n === name);
-            }
-          }
-        }
-
-        buildTree();
-
-        // ---------- Inspector ----------
-        const rotX = byId('rot-x'), rotY = byId('rot-y'), rotZ = byId('rot-z');
-        const posX = byId('pos-x'), posY = byId('pos-y'), posZ = byId('pos-z');
-
-        const toNum = v => Number.isFinite(parseFloat(v)) ? parseFloat(v) : 0;
-
-        rotX.addEventListener('change', () => selectedBone && applyEulerDeg(selectedBone, parseFloat(rotX.value), parseFloat(rotY.value), parseFloat(rotZ.value)));
-        rotY.addEventListener('change', () => selectedBone && applyEulerDeg(selectedBone, parseFloat(rotX.value), parseFloat(rotY.value), parseFloat(rotZ.value)));
-        rotZ.addEventListener('change', () => selectedBone && applyEulerDeg(selectedBone, parseFloat(rotX.value), parseFloat(rotY.value), parseFloat(rotZ.value)));
-        posX.addEventListener('change', () => selectedBone && selectedBone.name === 'Root' && (selectedBone.position.x = parseFloat(posX.value), markPoseDirty()));
-        posY.addEventListener('change', () => selectedBone && selectedBone.name === 'Root' && (selectedBone.position.y = parseFloat(posY.value), markPoseDirty()));
-        posZ.addEventListener('change', () => selectedBone && selectedBone.name === 'Root' && (selectedBone.position.z = parseFloat(posZ.value), markPoseDirty()));
-
-        function eulerDeg(bone) {
-          const e = new THREE.Euler().setFromQuaternion(bone.quaternion, "XYZ");
-          return { x: e.x * RAD, y: e.y * RAD, z: e.z * RAD };
-        }
-
-        function applyEulerDeg(bone, x, y, z, clampToLimits = true) {
-          const lim = jointLimits[bone.name] || {};
-          const cx = clampToLimits && lim.x ? clamp(x, lim.x[0], lim.x[1]) : x;
-          const cy = clampToLimits && lim.y ? clamp(y, lim.y[0], lim.y[1]) : y;
-          const cz = clampToLimits && lim.z ? clamp(z, lim.z[0], lim.z[1]) : z;
-          const e = new THREE.Euler(cx * DEG, cy * DEG, cz * DEG, "XYZ");
-          bone.quaternion.setFromEuler(e);
-          if (symmetryEnabled) mirrorPartnerOnEdit(bone);
-          markPoseDirty();
-          updateInspectorUIValuesOnly(); // keep UI in sync after clamping
-        }
-
-        function updateInspectorUI() {
-          const name = selectedBone ? selectedBone.name : '-';
-          byId('inspector-joint').textContent = name;
-          const lim = jointLimits[name] || {};
-          byId('lim-x').textContent = `X ${lim.x ? `${lim.x[0]}…${lim.x[1]}` : '-'}`;
-          byId('lim-y').textContent = `Y ${lim.y ? `${lim.y[0]}…${lim.y[1]}` : '-'}`;
-          byId('lim-z').textContent = `Z ${lim.z ? `${lim.z[0]}…${lim.z[1]}` : '-'}`;
-          // Position: only Root is editable
-          const rootEditable = (name === 'Root');
-          for (const el of [posX, posY, posZ]) { el.disabled = !rootEditable; el.title = rootEditable ? '' : 'Only Root is translatable'; }
-          updateInspectorUIValuesOnly();
-        }
-
-        function updateInspectorUIValuesOnly() {
-          if (!selectedBone) return;
-          const e = eulerDeg(selectedBone);
-          rotX.value = e.x.toFixed(1); rotY.value = e.y.toFixed(1); rotZ.value = e.z.toFixed(1);
-          const p = selectedBone.position;
-          posX.value = p.x.toFixed(3); posY.value = p.y.toFixed(3); posZ.value = p.z.toFixed(3);
-        }
-
-        queueMicrotask(() => selectBoneByName('Root'));
-
-        // ---------- Picking ----------
-        function onPointerDown(e) {
-          // Avoid picking while dragging transform controls
-          if (tctrl.dragging) return;
-          const rect = renderer.domElement.getBoundingClientRect();
-          mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-          mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-          raycaster.setFromCamera(mouse, camera);
-          const meshes = [...jointSpheres.values()];
-          const hit = raycaster.intersectObjects(meshes, false)[0];
-          if (hit) {
-            selectBoneByName(hit.object.userData.boneName);
-            // If this bone is an IK end effector and that limb is IK, attach tctrl to the handle instead
-            const limb = limbFromEnd(selectedBone.name);
-            if (limb && ikMode[limb] === 'IK') {
-              attachToIKHandle(limb);
-            } else {
-              tctrl.attach(selectedBone);
-            }
-          }
-        }
-
-        // ---------- Transform controls change -> clamp + sync ----------
-        tctrl.addEventListener('objectChange', () => {
-          if (!tctrl.object) return;
-          const isBone = tctrl.object.isBone === true;
-          const isActiveTranslate = (tctrl.mode === 'translate'); // TransformControls exposes `.mode`
-          if (isBone && isActiveTranslate) {
-            const bind = bindLocalPos.get(tctrl.object.name);
-            if (bind) tctrl.object.position.copy(bind);
-          }
-          // If attached to IK handle, solve IK; else if attached to a bone, clamp to limits.
-          if (tctrl.object.userData && tctrl.object.userData.isIKHandle) {
-            const limb = tctrl.object.userData.limb;
-            solveIKForLimb(limb);
-            markPoseDirty();
-            updateInspectorUIValuesOnly();
-          } else if (selectedBone) {
-            // Clamp bone to limits
-            const lim = jointLimits[selectedBone.name];
-            if (lim) {
-              const e = eulerDeg(selectedBone);
-              applyEulerDeg(selectedBone, e.x, e.y, e.z, true); // reapply to clamp
-            }
-            markPoseDirty();
-            updateInspectorUIValuesOnly();
-          }
-        });
-
-        // ---------- FK/IK ----------
-        function limbFromEnd(endName) {
-          switch (endName) {
-            case 'LeftWrist': return 'LeftArm';
-            case 'RightWrist': return 'RightArm';
-            case 'LeftAnkle': return 'LeftLeg';
-            case 'RightAnkle': return 'RightLeg';
-            default: return null;
-          }
-        }
-        function chainForLimb(limb) {
-          if (limb === 'LeftArm') return ['LeftShoulder', 'LeftElbow', 'LeftWrist'];
-          if (limb === 'RightArm') return ['RightShoulder', 'RightElbow', 'RightWrist'];
-          if (limb === 'LeftLeg') return ['LeftHip', 'LeftKnee', 'LeftAnkle'];
-          if (limb === 'RightLeg') return ['RightHip', 'RightKnee', 'RightAnkle'];
-          return [];
-        }
-        // Attach transform control to IK handle
-        function attachToIKHandle(limb) {
-          const h = ikHandles[limb];
-          if (!h) return;
-          h.userData.isIKHandle = true;
-          h.userData.limb = limb;
-          tctrl.attach(h);
-          setSpace('world');
-          setMode('translate');
-        }
-
-
-        // Simple FABRIK solver (positions only), then orient bones so local +Y aims to child vector.
-        function solveIKForLimb(limb, fromMirror = false) {
-          const names = chainForLimb(limb);
-          if (names.length < 3) return;
-          const bones = names.map(n => bonesByName.get(n));
-          const target = ikHandles[limb].position.clone();
-
-          // Collect world positions and lengths
-          const pts = bones.map(b => b.getWorldPosition(new THREE.Vector3()));
-          const lens = [];
-          for (let i = 0; i < pts.length - 1; i++) lens.push(pts[i].distanceTo(pts[i + 1]));
-          const totalLen = lens.reduce((a, b) => a + b, 0);
-          const base = pts[0].clone();
-
-          // If target too far, just stretch toward target
-          const dist = base.distanceTo(target);
-          const iters = 12;
-          const eps = 1e-3;
-
-          if (dist > totalLen) {
-            // forward pass only
-            for (let i = 0; i < pts.length - 1; i++) {
-              const r = target.clone().sub(pts[i]).normalize().multiplyScalar(lens[i]);
-              pts[i + 1] = pts[i].clone().add(r);
-            }
-          } else {
-            // FABRIK: forward & backward
-            let b = base.clone();
-            let diff = pts[pts.length - 1].distanceTo(target);
-            let k = 0;
-            while (diff > eps && k++ < iters) {
-              // Forward: set end to target
-              pts[pts.length - 1] = target.clone();
-              for (let i = pts.length - 2; i >= 0; i--) {
-                const dir = pts[i].clone().sub(pts[i + 1]).normalize();
-                pts[i] = pts[i + 1].clone().add(dir.multiplyScalar(lens[i]));
-              }
-              // Backward: set base to original
-              pts[0] = b.clone();
-              for (let i = 0; i < pts.length - 1; i++) {
-                const dir = pts[i + 1].clone().sub(pts[i]).normalize();
-                pts[i + 1] = pts[i].clone().add(dir.multiplyScalar(lens[i]));
-              }
-              diff = pts[pts.length - 1].distanceTo(target);
-            }
-          }
-
-          // Align the mid-joint to the limb’s pole plane (keeps elbow/knee from flipping)
-          const poleDir = getPoleDirWorld(limb);
-          const p0 = pts[0], p1 = pts[1], p2 = pts[2];
-          const p1Aligned = alignMidToPole(p0, p1, p2, poleDir);
-          pts[1] = p1Aligned;   // keep endpoints fixed; rotate mid around the axis
-
-          // Update bone orientations to aim +Y to next segment and positions (only for base if chain root != parent)
-          for (let i = 0; i < bones.length; i++) {
-            const bone = bones[i];
-            // Desired direction in WORLD:
-            if (i < bones.length - 1) {
-              const nextPos = pts[i + 1];
-              const dirWorld = nextPos.clone().sub(pts[i]).normalize();
-              // Express that direction in the PARENT’S LOCAL space:
-              const parentWQ = bone.parent.getWorldQuaternion(new THREE.Quaternion());
-              const parentWQInv = parentWQ.clone().invert();
-              const dirLocal = dirWorld.clone().applyQuaternion(parentWQInv).normalize();
-
-              // Map bind axis -> desired local direction
-              const bindAxis = bone.userData.bindAxisLocal || new THREE.Vector3(0, 1, 0);
-              const qLocal = new THREE.Quaternion();
-              const dot = bindAxis.dot(dirLocal);
-              if (dot < -0.9995) {
-                // Stable 180° rotation around an axis orthogonal to bindAxis
-                const ortho = Math.abs(bindAxis.x) < 0.9 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1);
-                const axis = ortho.clone().sub(bindAxis.clone().multiplyScalar(ortho.dot(bindAxis))).normalize();
-                qLocal.setFromAxisAngle(axis, Math.PI);
-              } else if (dot > 0.9995) {
-                qLocal.identity(); // already aligned
-              } else {
-                qLocal.setFromUnitVectors(bindAxis, dirLocal);
-              }
-              bone.quaternion.copy(qLocal);
-              // Clamp after solve (softly)
-              const lim = jointLimits[bone.name];
-              if (lim) {
-                const e = new THREE.Euler().setFromQuaternion(bone.quaternion, "XYZ");
-                const ex = lim.x ? clamp(e.x * RAD, lim.x[0], lim.x[1]) : e.x * RAD;
-                const ey = lim.y ? clamp(e.y * RAD, lim.y[0], lim.y[1]) : e.y * RAD;
-                const ez = lim.z ? clamp(e.z * RAD, lim.z[0], lim.z[1]) : e.z * RAD;
-                bone.quaternion.setFromEuler(new THREE.Euler(ex * DEG, ey * DEG, ez * DEG, "XYZ"));
-              }
-            }
-          }
-          if (symmetryEnabled && !fromMirror) {
-            // Mirror once without bouncing back recursively
-            mirrorPartnerLimb(limb);
-          }
-          // Bones changed -> refresh world matrices for consistent reads elsewhere
-          scene.updateMatrixWorld(true);
-        }
-
-        // Keep IK handle positions in sync with current end-effectors
-        function syncIKHandles() {
-          for (const [limb, handle] of Object.entries(ikHandles)) {
-            const end = bonesByName.get(chainForLimb(limb).slice(-1)[0]);
-            const p = end.getWorldPosition(new THREE.Vector3());
-            if (tctrl.object !== handle) {
-              handle.position.copy(p);
-            }
-            handle.userData.isIKHandle = true;
-            handle.userData.limb = limb;
-            handle.visible = (ikMode[limb] === 'IK');
-          }
-        }
-
-        // ---------- Symmetry & Mirror ----------
-        const mirrorMap = new Map([
-          ['LeftClavicle', 'RightClavicle'], ['LeftShoulder', 'RightShoulder'], ['LeftElbow', 'RightElbow'], ['LeftWrist', 'RightWrist'], ['LeftHand', 'RightHand'],
-          ['LeftHip', 'RightHip'], ['LeftKnee', 'RightKnee'], ['LeftAnkle', 'RightAnkle'], ['LeftFoot', 'RightFoot'],
-        ]);
-        function partnerName(name) {
-          for (const [L, R] of mirrorMap) {
-            if (name === L) return R;
-            if (name === R) return L;
-          }
-          return null;
-        }
-        let symmetryEnabled = false;
-        function mirrorQuaternionAcrossX(q) {
-          // M R M where M = diag(-1,1,1) (mirror across X). Convert to matrix, apply, then back to quaternion.
-          const m = new THREE.Matrix4().makeRotationFromQuaternion(q);
-          const M = new THREE.Matrix4().makeScale(-1, 1, 1);
-          const out = new THREE.Matrix4().copy(M).multiply(m).multiply(M);
-          const q2 = new THREE.Quaternion().setFromRotationMatrix(out);
-          return q2;
-        }
-        function mirrorBonePose(srcBone, dstBone) {
-          // Mirror local rotation across world X and negate local X position (for clavicle/hip spacing)
-          dstBone.quaternion.copy(mirrorQuaternionAcrossX(srcBone.quaternion));
-          if (srcBone.parent === dstBone.parent) {
-            dstBone.position.set(-srcBone.position.x, srcBone.position.y, srcBone.position.z);
-          }
-        }
-        function mirrorPoseAll() {
-          for (const [L, R] of mirrorMap) {
-            const l = bonesByName.get(L), r = bonesByName.get(R);
-            // decide direction based on current selection (left→right or right→left); default left→right
-            if (selectedBone && selectedBone.name.startsWith('Right')) {
-              mirrorBonePose(r, l);
-            } else {
-              mirrorBonePose(l, r);
-            }
-          }
-          markPoseDirty();
-          setStatus('Pose mirrored across X');
-        }
-        function mirrorPartnerOnEdit(bone) {
-          const p = partnerName(bone.name);
-          if (!p) return;
-          const partner = bonesByName.get(p);
-          if (!partner) return;
-          mirrorBonePose(bone, partner);
-        }
-        function mirrorPartnerLimb(limb) {
-          const other = limb.startsWith('Left') ? limb.replace('Left', 'Right') : limb.replace('Right', 'Left');
-          const srcEnd = chainForLimb(limb).slice(-1)[0];
-          const dstEnd = chainForLimb(other).slice(-1)[0];
-          const src = bonesByName.get(srcEnd).getWorldPosition(new THREE.Vector3());
-          const dst = new THREE.Vector3(-src.x, src.y, src.z); // mirror end-effector target across X
-          ikHandles[other].position.copy(dst);
-          solveIKForLimb(other, /*fromMirror=*/true);
-        }
-
-        // ---------- Pose Library (localStorage) ----------
-        const LIBKEY = 'openpose3d-library-v1';
-        function loadLibrary() {
-          try {
-            const raw = localStorage.getItem(LIBKEY);
-            return raw ? JSON.parse(raw) : { poses: [] };
-          } catch { return { poses: [] } }
-        }
-        function saveLibrary(lib) { localStorage.setItem(LIBKEY, JSON.stringify(lib)); }
-        function captureThumbnail(w = 200, h = 140) {
-          // Draw current renderer image into a smaller canvas to create a lightweight dataURL
-          const tmp = document.createElement('canvas');
-          tmp.width = w; tmp.height = h;
-          const ctx = tmp.getContext('2d');
-          ctx.drawImage(renderer.domElement, 0, 0, w, h);
-          return tmp.toDataURL('image/png');
-        }
-        function currentPoseAsJSON() {
-          const o = {};
-          for (const [name, b] of bonesByName) {
-            const e = eulerDeg(b);
-            o[name] = {
-              r: [e.x, e.y, e.z],
-              p: [b.position.x, b.position.y, b.position.z]
-            };
-          }
-          return o;
-        }
-        function applyPose(json) {
-          for (const [name, data] of Object.entries(json)) {
-            const b = bonesByName.get(name);
-            if (!b) continue;
-            const [rx, ry, rz] = data.r || [0, 0, 0];
-            applyEulerDeg(b, rx, ry, rz, true);
-            if (name === 'Root' && data.p) {
-              b.position.set(data.p[0], data.p[1], data.p[2]);
-            }
-          }
-          scene.updateMatrixWorld(true);
-          syncIKHandles();
-          markPoseDirty(); // schedule a render so the viewport updates immediately
-        }
-        function refreshThumbs() {
-          const { poses } = loadLibrary();
-          const box = byId('thumbs');
-          box.innerHTML = "";
-          poses.forEach((p, idx) => {
-            const card = document.createElement('div'); card.className = 'thumb';
-            const img = document.createElement('img'); img.src = p.thumb || '';
-            const cap = document.createElement('div'); cap.className = 'cap';
-            const name = document.createElement('span'); name.textContent = p.name;
-            const del = document.createElement('button'); del.textContent = 'Delete'; del.className = 'small';
-            const over = document.createElement('button'); over.textContent = 'Overwrite'; over.className = 'small';
-            card.appendChild(img); cap.appendChild(name); cap.appendChild(over); cap.appendChild(del); card.appendChild(cap);
-            card.onclick = (ev) => { if (ev.target === del || ev.target === over) return; applyPose(p.pose); setStatus(`Applied pose: ${p.name}`); };
-            over.onclick = (ev) => { ev.stopPropagation(); const lib = loadLibrary(); lib.poses[idx] = { name: p.name, pose: currentPoseAsJSON(), thumb: captureThumbnail() }; saveLibrary(lib); refreshThumbs(); setStatus(`Overwrote: ${p.name}`); };
-            del.onclick = (ev) => { ev.stopPropagation(); const lib = loadLibrary(); lib.poses.splice(idx, 1); saveLibrary(lib); refreshThumbs(); setStatus(`Deleted: ${p.name}`); };
-            box.appendChild(card);
-          });
-        }
-        // ---------- OpenPose (BODY_25) Export ----------
-        // Loosely based on openpose BODY_25 format, draw things seems to have
-        // missing joints so we adapt accordingly in an odd format so we adapt accordingly.
-        // BODY_25 indices and how we source them from your rig.
-        // For missing parts (face, toes, heel), we export (0,0,0) per OpenPose convention.
-        const OP_BODY25_ORDER = [
-          'REye',
-          'Neck',
-          'RShoulder',
-          'RElbow',
-          'RWrist',
-          'LShoulder',
-          'LElbow',
-          'LWrist',
-          'RHip',
-          'RKnee',
-          'RAnkle',
-          'LHip',
-          'LKnee',
-          'LAnkle',
-          'REye',
-          'LEye',
-          'REar',
-          'LEar',
-        ];
-
-        // Map OpenPose names to your skeleton bones (or a function)
-        const OP_TO_BONE = {
-          Neck: 'Neck',
-          RShoulder: 'RightShoulder',
-          RElbow: 'RightElbow',
-          RWrist: 'RightWrist',
-          LShoulder: 'LeftShoulder',
-          LElbow: 'LeftElbow',
-          LWrist: 'LeftWrist',
-          RHip: 'RightHip',
-          RKnee: 'RightKnee',
-          RAnkle: 'RightAnkle',
-          LHip: 'LeftHip',
-          LKnee: 'LeftKnee',
-          LAnkle: 'LeftAnkle',
-        };
-
-        // Project a world position to normalized screen coordinates [0,1]^2.
-        // Returns {x,y,c} with c=1 if inside clip range, else {0,0,0}.
-        function projectWorldTo01(worldVec, camera) {
-          if (!worldVec) return { x: 0, y: 0, c: 0 };
-          const v = worldVec.clone().project(camera); // NDC [-1,1]
-          const inClip = (v.z >= -1 && v.z <= 1);
-          if (!inClip) return { x: 0, y: 0, c: 0 };
-          const x = (v.x + 1) * 0.5;
-          const y = (1 - v.y) * 0.5; // top-left origin like OpenPose
-          // Clamp defensively
-          return { x: Math.min(1, Math.max(0, x)), y: Math.min(1, Math.max(0, y)), c: 1.0 };
-        }
-
-        // For pixel coordinates instead of normalized: convert [0,1] → pixels
-        function toPixels01(pt01) {
-          const rect = renderer.domElement.getBoundingClientRect();
-          return { x: pt01.x * rect.width, y: pt01.y * rect.height, c: pt01.c };
-        }
-
-        function buildOpenPoseBody25({ normalize = true } = {}) {
-          scene.updateMatrixWorld(true);
-
-          const triples = [];
-          for (const label of OP_BODY25_ORDER) {
-            let worldPos = null;
-
-            if (OP_TO_BONE[label]) {
-              if (typeof OP_TO_BONE[label] === 'function') {
-                worldPos = OP_TO_BONE[label](bonesByName); // e.g., MidHip midpoint
-              } else {
-                const b = bonesByName.get(OP_TO_BONE[label]);
-                if (b) worldPos = b.getWorldPosition(new THREE.Vector3());
-              }
-            }
-            // Missing labels (Nose/Eyes/Ears/Toes/Heels) → null → 0,0,0
-
-            let pt = projectWorldTo01(worldPos, camera);
-            if (!normalize && pt.c > 0) {
-              pt = toPixels01(pt);
-            }
-            triples.push(pt.x, pt.y, pt.c);
-          }
-          return triples;
-        }
-
-        function exportOpenPoseJSON({ normalize = true } = {}) {
-          // Single-person export compatible with OpenPose JSON
-          const pose2d = buildOpenPoseBody25({ normalize });
-
-          const payload = {
-            people: [{
-              pose_keypoints_2d: pose2d,
-            }]
-          };
-
-          const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-          const a = document.createElement('a');
-          const ts = new Date().toISOString().replace(/[:.]/g, '-');
-          a.href = URL.createObjectURL(blob);
-          a.download = `openpose_body25_${normalize ? 'norm01' : 'px'}_${ts}.json`;
-          a.click();
-          URL.revokeObjectURL(a.href);
-        }
-
-        // Hook up the button
-        document.getElementById('export-openpose').onclick = () => {
-          const normalize = !!document.getElementById('openpose-normalize')?.checked;
-          exportOpenPoseJSON({ normalize });
-        };
-        byId('save-pose').onclick = () => {
-          const name = byId('pose-name').value.trim() || `Pose ${new Date().toLocaleTimeString()}`;
-          const pose = currentPoseAsJSON();
-          const thumb = captureThumbnail();
-          const lib = loadLibrary();
-          // If name exists, replace (explicit overwrite is in UI too)
-          const idx = lib.poses.findIndex(p => p.name === name);
-          if (idx >= 0) lib.poses[idx] = { name, pose, thumb }; else lib.poses.unshift({ name, pose, thumb });
-          saveLibrary(lib); refreshThumbs();
-          setStatus(`Saved pose: ${name}`);
-        };
-        byId('export-library').onclick = () => {
-          const lib = loadLibrary();
-          const blob = new Blob([JSON.stringify(lib)], { type: 'application/json' });
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = 'pose-library.json';
-          a.click(); URL.revokeObjectURL(a.href);
-        };
-        byId('import-library').onchange = (e) => {
-          const file = e.target.files[0]; if (!file) return;
-          const reader = new FileReader();
-          reader.onload = () => {
-            try {
-              const data = JSON.parse(reader.result);
-              if (!data || !Array.isArray(data.poses)) throw new Error('Invalid file');
-              saveLibrary(data); refreshThumbs(); setStatus(`Imported ${data.poses.length} poses`);
-            } catch (err) { alert('Import failed: ' + err.message); }
-          };
-          reader.readAsText(file);
-        };
-
-        refreshThumbs();
-
-        // ---------- Reference image overlay ----------
-        const refImg = byId('ref-img');
-        const refFile = byId('ref-file');
-        const refOpacity = byId('ref-opacity');
-        const refScale = byId('ref-scale');
-        const refOX = byId('ref-ox');
-        const refOY = byId('ref-oy');
-
-        refFile.onchange = (e) => {
-          const file = e.target.files[0]; if (!file) return;
-          const url = URL.createObjectURL(file);
-          refImg.src = url;
-          refImg.onload = () => {
-            refImg.classList.remove('hidden');
-            setStatus('Reference image loaded');
-          };
-        };
-        function applyRefControls() {
-          refImg.style.opacity = refOpacity.value;
-          refImg.style.transform = `translate(${refOX.value}px, ${refOY.value}px) scale(${refScale.value})`;
-        }
-        [refOpacity, refScale, refOX, refOY].forEach(el => el.addEventListener('input', applyRefControls));
-
-        // ---------- Camera buttons ----------
-        function usePersp() {
-          camera = persp; byId('cam-persp').dataset.state = 'active';
-          byId('cam-ortho-front').dataset.state = '';
-          byId('cam-ortho-side').dataset.state = '';
-          orbit.object = camera; tctrl.camera = camera;
-          orbit.enableRotate = true;
-          orbit.enableZoom = true;
-          orbit.zoomSpeed = 15;
-          orbit.enablePan = true;
-          setStatus('Camera: Perspective');
-        }
-        function useOrthoFront() {
-          camera = ortho; byId('cam-persp').dataset.state = '';
-          byId('cam-ortho-front').dataset.state = 'active';
-          byId('cam-ortho-side').dataset.state = '';
-          orbit.object = camera; tctrl.camera = camera;
-          // lock to exact front view
-          camera.position.set(0, 1.4, 5);
-          camera.lookAt(0, 1, 0);
-          orbit.target.set(0, 1, 0);
-          orbit.enableRotate = false; orbit.enableZoom = true; orbit.enablePan = true;
-          setStatus('Camera: Ortho Front (locked)');
-        }
-        function useOrthoSide() {
-          camera = ortho; byId('cam-persp').dataset.state = '';
-          byId('cam-ortho-front').dataset.state = '';
-          byId('cam-ortho-side').dataset.state = 'active';
-          orbit.object = camera; tctrl.camera = camera;
-          camera.position.set(5, 1.4, 0);
-          camera.lookAt(0, 1, 0);
-          orbit.target.set(0, 1, 0);
-          orbit.enableRotate = false; orbit.enableZoom = true; orbit.enablePan = true;
-          setStatus('Camera: Ortho Side (locked)');
-        }
-        // Buttons
-        byId('cam-persp').onclick = () => { orbit.enableRotate = true; usePersp(); };
-        byId('cam-ortho-front').onclick = useOrthoFront;
-        byId('cam-ortho-side').onclick = useOrthoSide;
-
-        // ---------- Toolbar buttons ----------
-        byId('mode-translate').onclick = () => setMode('translate');
-        byId('mode-rotate').onclick = () => setMode('rotate');
-        byId('space-local').onclick = () => setSpace('local');
-        byId('space-world').onclick = () => setSpace('world');
-        byId('toggle-grid').onclick = () => {
-          gridVisible = !gridVisible;
-          grid.visible = gridVisible;
-          byId('toggle-grid').dataset.state = gridVisible ? 'active' : '';
-        };
-        byId('reset-pose').onclick = resetPose;
-        byId('mirror-pose').onclick = mirrorPoseAll;
-        byId('screenshot').onclick = () => {
-          const a = document.createElement('a');
-          a.href = renderer.domElement.toDataURL('image/png');
-          a.download = 'openpose3d.png';
-          a.click();
-        };
-
-        // ---------- FK/IK toggles UI ----------
-        byId('ik-left-arm').onchange = (e) => setIKMode('LeftArm', e.target.value);
-        byId('ik-right-arm').onchange = (e) => setIKMode('RightArm', e.target.value);
-        byId('ik-left-leg').onchange = (e) => setIKMode('LeftLeg', e.target.value);
-        byId('ik-right-leg').onchange = (e) => setIKMode('RightLeg', e.target.value);
-
-        function setIKMode(limb, mode) {
-          ikMode[limb] = mode;
-          ikHandles[limb].visible = (mode === 'IK');
-          if (mode === 'IK') {
-            // place handle at end-effector world pos
-            const endName = chainForLimb(limb).slice(-1)[0];
-            const end = bonesByName.get(endName);
-            scene.updateMatrixWorld(true);
-            ikHandles[limb].position.copy(end.getWorldPosition(new THREE.Vector3()));
-            ikHandles[limb].userData.isIKHandle = true;
-            ikHandles[limb].userData.limb = limb;
-          } else {
-            // if we were attached to this handle, detach
-            if (tctrl.object === ikHandles[limb]) tctrl.detach();
-          }
-        }
-
-        // Symmetry toggle
-        byId('symmetry').onclick = (e) => {
-          symmetryEnabled = !symmetryEnabled;
-          byId('symmetry').dataset.state = symmetryEnabled ? 'active' : '';
-        };
-
-        // ---------- Keyboard shortcuts ----------
-        window.addEventListener('keydown', (e) => {
-          if (e.key === 'w' || e.key === 'W') { setMode('translate'); }
-          if (e.key === 'e' || e.key === 'E') { setMode('rotate'); }
-          if (e.key === 'g' || e.key === 'G') {
-            gridVisible = !gridVisible;
-            grid.visible = gridVisible;
-
-            byId('toggle-grid').dataset.state = gridVisible ? 'active' : '';
-          }
-          if (e.key === 'f' || e.key === 'F') { frameSelected(); }
-          if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); byId('save-pose').click(); }
-        });
-
-        function frameSelected() {
-          const obj = tctrl.object || bonesByName.get('Root');
-          const box = new THREE.Box3().setFromObject(obj);
-          const size = new THREE.Vector3(); box.getSize(size);
-          const center = new THREE.Vector3(); box.getCenter(center);
-          orbit.target.copy(center);
-          const dist = Math.max(size.x, size.y, size.z) * 2 + 0.5;
-          if (camera.isPerspectiveCamera) {
-            const dir = new THREE.Vector3().subVectors(camera.position, orbit.target).normalize();
-            camera.position.copy(orbit.target).addScaledVector(dir, dist);
-          } else {
-            // Ortho: adjust zoom by changing view size
-            // Keep it simple: just move back a bit
-            camera.position.set(center.x + 2, center.y + 2, center.z + 2);
-            camera.lookAt(center);
-          }
-        }
-
-        // ---------- Pose reset ----------
-        function resetPose() {
-          for (const [name, b] of bonesByName) {
-            b.quaternion.identity();
-            // Reset local position to bind pose per spec
-            const spec = boneSpec.find(s => s[0] === name);
-            if (spec) b.position.fromArray(spec[2]);
-          }
-          scene.updateMatrixWorld(true);
-          syncIKHandles();
-          markPoseDirty(); // render now so users see the reset
-          setStatus('Pose reset');
-        }
-
-        // ---------- Tree selection auto-update at start ----------
-        updateInspectorUI();
-
-        // ---------- Layout / Resize ----------
-        function onResize() {
-          renderer.setSize(viewportEl.clientWidth, viewportEl.clientHeight);
-          persp.aspect = viewportEl.clientWidth / viewportEl.clientHeight;
-          persp.updateProjectionMatrix();
-          // Match ortho frustum to viewport
-          const s = orthoSize;
-          const aspect = viewportEl.clientWidth / viewportEl.clientHeight;
-          if (aspect >= 1) {
-            ortho.left = -s * aspect; ortho.right = s * aspect; ortho.top = s; ortho.bottom = -s;
-          } else {
-            ortho.left = -s; ortho.right = s; ortho.top = s / aspect; ortho.bottom = -s / aspect;
-          }
-          ortho.updateProjectionMatrix();
-        }
-        window.addEventListener('resize', onResize);
-
-        // ---------- Toolbar initial state ----------
-        setMode('rotate');
-        setSpace('local');
-        usePersp();
-
-        // ---------- Render loop ----------
-        function markPoseDirty() { needsRender = true; }
-        function render() {
-          orbit.update();
-          // Ensure world matrices are fresh before any getWorldPosition/getWorldQuaternion calls
-          scene.updateMatrixWorld(true);
-          syncIKHandles();               // this reads end-effector world positions
-          renderer.render(scene, camera);
-        }
-        function tick() {
-          if (needsRender) { render(); needsRender = false; } else { orbit.update(); }
-          requestAnimationFrame(tick);
-        }
-        tick();
-
-        // Ensure we render on any input/change
-        const ro = new ResizeObserver(() => { onResize(); markPoseDirty(); });
-        ro.observe(viewportEl);
-        renderer.domElement.addEventListener('pointermove', () => markPoseDirty());
-        document.addEventListener('input', () => markPoseDirty());
-        document.addEventListener('change', () => markPoseDirty());
-
-        // ---------- Toolbar button states ----------
-        function toggleState(el, active) {
-          el.dataset.state = active ? 'active' : '';
-        }
-
-        // Activate gizmo buttons & space buttons
-        byId('mode-translate').addEventListener('click', () => setMode('translate'));
-        byId('mode-rotate').addEventListener('click', () => setMode('rotate'));
-        byId('space-local').addEventListener('click', () => setSpace('local'));
-        byId('space-world').addEventListener('click', () => setSpace('world'));
-
-        // ---------- Final small touches ----------
-        setStatus('Ready. Click a joint sphere to select. Use E/W to switch gizmos.');
-      })();
-    </script>
-  </body>
+    <div class="group">
+      <h3>Skeleton Hierarchy</h3>
+      <div class="tree" id="tree"></div>
+    </div>
+  </div>
+  <!-- Center: 3D viewport + overlay -->
+  <div class="center">
+    <div class="overlay">
+      <img
+        id="ref-img"
+        class="hidden"
+        alt="reference"
+      />
+    </div>
+    <div id="viewport" class="viewport"></div>
+  </div>
+  <!-- Right: library, IK, reference overlay, IO -->
+  <div class="right">
+    <div class="group">
+      <h3>Pose Library</h3>
+      <div class="row">
+        <input
+          id="pose-name"
+          type="text"
+          placeholder="Pose name (e.g., T-Pose)"
+        />
+        <button id="save-pose">Save Pose</button>
+      </div>
+      <div class="thumbs" id="thumbs"></div>
+      <div class="row small">
+        <span class="note">Note: Saved locally in localStorage.</span>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Import & Export</h3>
+      <div class="split">
+        <button id="export-library">Export JSON</button>
+        <label class="hidden" for="import-library"></label>
+        <input
+          id="import-library"
+          type="file"
+          accept="application/json"
+        />
+      </div>
+      <div class="row small">
+        <span class="muted">Tip:</span>
+        Share pose packs with your team.
+      </div>
+    </div>
+    <div class="group">
+      <h3>OpenPose Export</h3>
+      <div class="row">
+        <button id="export-openpose">Export OpenPose (Draw Things)</button>
+      </div>
+      <div class="row small">
+        <label>Normalize</label>
+        <input
+          id="openpose-normalize"
+          type="checkbox"
+          checked
+        />
+      </div>
+    </div>
+    <div class="group">
+      <h3>FK / IK & Symmetry</h3>
+      <div class="row">
+        <label>Left Arm</label>
+        <select id="ik-left-arm">
+          <option value="FK">FK</option>
+          <option value="IK">IK</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Right Arm</label>
+        <select id="ik-right-arm">
+          <option value="FK">FK</option>
+          <option value="IK">IK</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Left Leg</label>
+        <select id="ik-left-leg">
+          <option value="FK">FK</option>
+          <option value="IK">IK</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Right Leg</label>
+        <select id="ik-right-leg">
+          <option value="FK">FK</option>
+          <option value="IK">IK</option>
+        </select>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Reference Image Overlay</h3>
+      <div class="row">
+        <input
+          id="ref-file"
+          type="file"
+          accept="image/*"
+        />
+      </div>
+      <div class="row">
+        <label>Opacity</label>
+        <input
+          id="ref-opacity"
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value="0.5"
+        />
+      </div>
+      <div class="row">
+        <label>Scale</label>
+        <input
+          id="ref-scale"
+          type="range"
+          min="0.1"
+          max="3"
+          step="0.01"
+          value="1.0"
+        />
+      </div>
+      <div class="row">
+        <label>Offset X</label>
+        <input
+          id="ref-ox"
+          type="range"
+          min="-500"
+          max="500"
+          step="1"
+          value="0"
+        />
+      </div>
+      <div class="row">
+        <label>Offset Y</label>
+        <input
+          id="ref-oy"
+          type="range"
+          min="-500"
+          max="500"
+          step="1"
+          value="0"
+        />
+      </div>
+    </div>
+    <div class="group">
+      <h3>Controls & Shortcuts</h3>
+      <div class="row">
+        <span class="note">Orbit: drag, Pan: right‑drag, Zoom: wheel</span>
+        <span class="note">
+          <span class="kbd">W</span>
+          Translate •
+          <span class="kbd">E</span>
+          Rotate •
+          <span class="kbd">F</span>
+          Frame Selected •
+          <span class="kbd">G</span>
+          Grid •
+          <span class="kbd">Ctrl/Cmd + S</span>
+          Save Pose
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="module" src="/main.js"></script>
+</body>
 </html>
