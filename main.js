@@ -73,7 +73,7 @@ orbit.target.set(0, 1.0, 0);
 
 const tctrl = new TransformControls(camera, renderer.domElement);
 tctrl.setMode("rotate");
-tctrl.setSize(0.8);
+tctrl.setSize(0.76);
 tctrl.addEventListener(
   "dragging-changed",
   (e) => (orbit.enabled = !e.value)
@@ -942,34 +942,42 @@ function refreshThumbs() {
     cap.className = "cap";
     const name = document.createElement("span");
     name.textContent = p.name;
+    const butContainer = document.createElement("div");
+    butContainer.className = "button-container";
     const del = document.createElement("button");
     del.textContent = "Delete";
-    del.className = "small";
-    const over = document.createElement("button");
-    over.textContent = "Overwrite";
-    over.className = "small";
+    del.className = "smaller";
+    // const over = document.createElement("button");
+    // over.textContent = "Overwrite";
+    // over.className = "small";
     card.appendChild(img);
     cap.appendChild(name);
-    cap.appendChild(over);
-    cap.appendChild(del);
+    cap.appendChild(butContainer);
+    // butContainer.appendChild(over);
+    butContainer.appendChild(del);
     card.appendChild(cap);
     card.onclick = (ev) => {
-      if (ev.target === del || ev.target === over) return;
+      if (
+        // ev.target === over ||
+        ev.target === del
+      ) {
+        return;
+      }
       applyPose(p.pose);
       setStatus(`Applied pose: ${p.name}`);
     };
-    over.onclick = (ev) => {
-      ev.stopPropagation();
-      const lib = loadLibrary();
-      lib.poses[idx] = {
-        name: p.name,
-        pose: currentPoseAsJSON(),
-        thumb: captureThumbnail(),
-      };
-      saveLibrary(lib);
-      refreshThumbs();
-      setStatus(`Overwrote: ${p.name}`);
-    };
+    // over.onclick = (ev) => {
+    //   ev.stopPropagation();
+    //   const lib = loadLibrary();
+    //   lib.poses[idx] = {
+    //     name: p.name,
+    //     pose: currentPoseAsJSON(),
+    //     thumb: captureThumbnail(),
+    //   };
+    //   saveLibrary(lib);
+    //   refreshThumbs();
+    //   setStatus(`Overwrote: ${p.name}`);
+    // };
     del.onclick = (ev) => {
       ev.stopPropagation();
       const lib = loadLibrary();

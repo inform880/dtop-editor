@@ -42,8 +42,12 @@
       </button>
       <button id="space-world" title="World space">World</button>
       <div class="divider"></div>
-      <button id="reset-pose" title="Reset pose">Reset</button>
-      <div class="divider"></div>
+      <button
+        id="reset-pose"
+        title="Reset pose"
+        class="hidden"
+      >Reset</button>
+      <div class="divider hidden"></div>
       <button id="symmetry" title="Symmetry">Symmetry</button>
       <div class="divider"></div>
       <button
@@ -54,10 +58,10 @@
         Persp
       </button>
       <button id="cam-ortho-front" title="Orthographic Front lock">
-        Ortho Front
+        Ort Front
       </button>
       <button id="cam-ortho-side" title="Orthographic Side lock">
-        Ortho Side
+        Ort Side
       </button>
       <div class="divider"></div>
       <button
@@ -77,9 +81,9 @@
       <h3>
         Joint Inspector
       </h3>
-      <span id="inspector-joint" class="pill">-</span>
+      <p id="inspector-joint" class="pill">-</p>
       <div class="row">
-        <label>Rotation (°)</label>
+        <h4>Rotation (°)</h4>
         <div class="split">
           <label class="note">X</label>
           <div>
@@ -114,7 +118,7 @@
         </div>
       </div>
       <div class="row">
-        <label>Transform</label>
+        <h4>Transform</h4>
         <div class="split">
           <label class="note">X</label>
           <input
@@ -158,7 +162,7 @@
   </div>
   <!-- Right: library, IK, reference overlay, IO -->
   <div class="right">
-    <div class="group">
+    <div class="right-top">
       <h3>Pose Library</h3>
       <div class="row">
         <input
@@ -169,141 +173,137 @@
         <button id="save-pose">Save Pose</button>
       </div>
       <div class="thumbs" id="thumbs"></div>
-      <div class="row small">
-        <span class="note">Note: Saved locally in localStorage.</span>
+      <div class="col">
+        <button id="export-library" class="button">Export Library</button>
+        <label for="import-library" class="button">Import Library</label>
+      </div>
+      <input
+        class="hidden"
+        id="import-library"
+        type="file"
+        accept="application/json"
+      />
+      <div class="row">
+        <span class="note small">Note: The pose library is also saved locally in localStorage</span>
       </div>
     </div>
-    <div class="group">
-      <h3>Import & Export</h3>
-      <div class="split">
-        <button id="export-library">Export JSON</button>
-        <label class="hidden" for="import-library"></label>
-        <input
-          id="import-library"
-          type="file"
-          accept="application/json"
-        />
+    <div class="right-bottom">
+      <div class="group">
+        <h3>OpenPose Export</h3>
+        <div class="col">
+          <label class="checkbox-label">Normalize:</label>
+          <input
+            id="openpose-normalize"
+            type="checkbox"
+            checked
+          />
+        </div>
+        <div class="row">
+          <button id="export-openpose">Export OpenPose (Draw Things)</button>
+        </div>
       </div>
-      <div class="row small">
-        <span class="muted">Tip:</span>
-        Share pose packs with your team.
+      <div class="group">
+        <h3>Reference Image Overlay</h3>
+        <div class="row">
+          <input
+            id="ref-file"
+            type="file"
+            accept="image/*"
+          />
+        </div>
+        <div class="row">
+          <h4>Opacity</h4>
+          <input
+            id="ref-opacity"
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value="0.5"
+          />
+        </div>
+        <div class="row">
+          <h4>Scale</h4>
+          <input
+            id="ref-scale"
+            type="range"
+            min="0.1"
+            max="3"
+            step="0.01"
+            value="1.0"
+          />
+        </div>
+        <div class="row">
+          <h4>Offset X</h4>
+          <input
+            id="ref-ox"
+            type="range"
+            min="-500"
+            max="500"
+            step="1"
+            value="0"
+          />
+        </div>
+        <div class="row">
+          <h4>Offset Y</h4>
+          <input
+            id="ref-oy"
+            type="range"
+            min="-500"
+            max="500"
+            step="1"
+            value="0"
+          />
+        </div>
       </div>
-    </div>
-    <div class="group">
-      <h3>OpenPose Export</h3>
-      <div class="row">
-        <button id="export-openpose">Export OpenPose (Draw Things)</button>
+      <div class="group">
+        <h3>Inverse Kinematics (alpha)</h3>
+        <div class="row">
+          <h4>Left Arm</h4>
+          <select id="ik-left-arm">
+            <option value="FK">FK</option>
+            <option value="IK">IK</option>
+          </select>
+        </div>
+        <div class="row">
+          <h4>Right Arm</h4>
+          <select id="ik-right-arm">
+            <option value="FK">FK</option>
+            <option value="IK">IK</option>
+          </select>
+        </div>
+        <div class="row">
+          <h4>Left Leg</h4>
+          <select id="ik-left-leg">
+            <option value="FK">FK</option>
+            <option value="IK">IK</option>
+          </select>
+        </div>
+        <div class="row">
+          <h4>Right Leg</h4>
+          <select id="ik-right-leg">
+            <option value="FK">FK</option>
+            <option value="IK">IK</option>
+          </select>
+        </div>
       </div>
-      <div class="row small">
-        <label>Normalize</label>
-        <input
-          id="openpose-normalize"
-          type="checkbox"
-          checked
-        />
-      </div>
-    </div>
-    <div class="group">
-      <h3>FK / IK & Symmetry</h3>
-      <div class="row">
-        <label>Left Arm</label>
-        <select id="ik-left-arm">
-          <option value="FK">FK</option>
-          <option value="IK">IK</option>
-        </select>
-      </div>
-      <div class="row">
-        <label>Right Arm</label>
-        <select id="ik-right-arm">
-          <option value="FK">FK</option>
-          <option value="IK">IK</option>
-        </select>
-      </div>
-      <div class="row">
-        <label>Left Leg</label>
-        <select id="ik-left-leg">
-          <option value="FK">FK</option>
-          <option value="IK">IK</option>
-        </select>
-      </div>
-      <div class="row">
-        <label>Right Leg</label>
-        <select id="ik-right-leg">
-          <option value="FK">FK</option>
-          <option value="IK">IK</option>
-        </select>
-      </div>
-    </div>
-    <div class="group">
-      <h3>Reference Image Overlay</h3>
-      <div class="row">
-        <input
-          id="ref-file"
-          type="file"
-          accept="image/*"
-        />
-      </div>
-      <div class="row">
-        <label>Opacity</label>
-        <input
-          id="ref-opacity"
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value="0.5"
-        />
-      </div>
-      <div class="row">
-        <label>Scale</label>
-        <input
-          id="ref-scale"
-          type="range"
-          min="0.1"
-          max="3"
-          step="0.01"
-          value="1.0"
-        />
-      </div>
-      <div class="row">
-        <label>Offset X</label>
-        <input
-          id="ref-ox"
-          type="range"
-          min="-500"
-          max="500"
-          step="1"
-          value="0"
-        />
-      </div>
-      <div class="row">
-        <label>Offset Y</label>
-        <input
-          id="ref-oy"
-          type="range"
-          min="-500"
-          max="500"
-          step="1"
-          value="0"
-        />
-      </div>
-    </div>
-    <div class="group">
-      <h3>Controls & Shortcuts</h3>
-      <div class="row">
-        <span class="note">Orbit: drag, Pan: right‑drag, Zoom: wheel</span>
-        <span class="note">
-          <span class="kbd">W</span>
-          Translate •
-          <span class="kbd">E</span>
-          Rotate •
-          <span class="kbd">F</span>
-          Frame Selected •
-          <span class="kbd">G</span>
-          Grid •
-          <span class="kbd">Ctrl/Cmd + S</span>
-          Save Pose
-        </span>
+      <div class="group">
+        <h3>Controls & Shortcuts</h3>
+        <div class="row">
+          <span class="note small">Orbit: drag, Pan: right‑drag, Zoom: wheel</span>
+          <span class="muted small">
+            <span class="kbd">W</span>
+            Translate •
+            <span class="kbd">E</span>
+            Rotate •
+            <span class="kbd">F</span>
+            Frame Selected •
+            <span class="kbd">G</span>
+            Grid •
+            <span class="kbd">Ctrl/Cmd + S</span>
+            Save Pose
+          </span>
+        </div>
       </div>
     </div>
   </div>
