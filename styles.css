@@ -9,8 +9,8 @@
   --warn: #ffbd4a;
   --danger: #ff5f64;
   --line: #1e356a;
-  --left-w: 225px;
-  --right-w: 300px;
+  --left-w: 180px;
+  --right-w: 400px;
   --top-h: 48px;
   --radius: 10px;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
@@ -98,7 +98,7 @@ body {
 }
 
 .group {
-  padding: 6px 12px 2px;
+  padding: 6px 8px 2px;
   border-bottom: 1px dotted var(--line);
 }
 
@@ -247,6 +247,7 @@ button[data-state="active"] {
   margin-left: auto;
   color: var(--muted);
   font-size: 0.85rem;
+  text-wrap-mode: nowrap;
 }
 
 .viewport {
@@ -290,12 +291,12 @@ canvas {
 }
 
 .tree {
-  padding: 10px;
+  padding: 0;
 }
 
 .tree ul {
   list-style: none;
-  padding-left: 12px;
+  padding-left: 8px;
   margin: 0;
 }
 
@@ -343,7 +344,7 @@ canvas {
 
 .thumbs {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 2px;
 }
 
@@ -364,12 +365,16 @@ canvas {
 }
 
 .thumb .cap {
-  padding: 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+}
+
+.thumb .cap p {
+  margin: 4px;
+  font-size: 0.76rem;
 }
 
 .thumb .cap .button-container {

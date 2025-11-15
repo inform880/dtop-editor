@@ -940,7 +940,7 @@ function refreshThumbs() {
     img.src = p.thumb || "";
     const cap = document.createElement("div");
     cap.className = "cap";
-    const name = document.createElement("span");
+    const name = document.createElement("p");
     name.textContent = p.name;
     const butContainer = document.createElement("div");
     butContainer.className = "button-container";
@@ -1114,7 +1114,14 @@ document.getElementById("export-openpose").onclick = () => {
 byId("save-pose").onclick = () => {
   const name =
     byId("pose-name").value.trim() ||
-    `Pose ${new Date().toLocaleTimeString()}`;
+    `${new Date().toLocaleString([], {
+      hour: "numeric",
+      hour12: false,
+      day: "numeric",
+      month: "numeric",
+      minute: "numeric",
+      second: "numeric"
+    }).replace(", ", "-")}`;
   const pose = currentPoseAsJSON();
   const thumb = captureThumbnail();
   const lib = loadLibrary();
