@@ -19,6 +19,68 @@
     "Segoe UI Emoji";
 }
 
+/* wrapper panel (optional) */
+.shortcuts-panel {
+  background: var(--panel);
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  padding: 12px 16px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* the table */
+.shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+/* header */
+.shortcuts-table th {
+  text-align: left;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+}
+
+/* rows */
+.shortcuts-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(137, 147, 167, 0.12);
+}
+
+/* zebra + hover */
+.shortcuts-table tr:nth-child(even) td {
+  background: rgba(14, 18, 32, 0.8);
+  /* panel2-ish */
+}
+
+.shortcuts-table tr:hover td {
+  background: rgba(83, 179, 255, 0.06);
+  /* accent tint */
+}
+
+/* first column: make it feel like keycaps */
+.shortcuts-table td:first-child {
+  width: 160px;
+}
+
+.shortcuts-table .shortcut-key {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: px;
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  font-size: 0.9rem;
+  color: var(--accent);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -100,10 +162,11 @@ body {
 .group {
   padding: 6px 8px 2px;
   border-bottom: 1px dotted var(--line);
+  width: 100%;
 }
 
 .group h3 {
-  margin: 0.3rem;
+  margin: 0.3rem 0;
   font-size: 1rem;
   color: #dfe6f5;
   display: flex;
@@ -112,7 +175,7 @@ body {
 }
 
 h3 {
-  margin: 0.3rem;
+  margin: 0.3rem 0;
   font-size: 1rem;
   color: #dfe6f5;
   display: flex;
@@ -143,8 +206,12 @@ h4 {
 }
 
 .col {
-  margin: 12px 0;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  gap: 8px;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
 input[type="number"],
@@ -166,7 +233,6 @@ input[type="checkbox"] {
 }
 
 input[type="range"] {
-  width: 100%;
   margin: 0;
   cursor: pointer;
 }
@@ -177,7 +243,6 @@ button {
   color: var(--text);
   border-radius: 8px;
   padding: 6px 10px;
-  font-weight: 400;
   cursor: pointer;
   text-wrap-mode: nowrap;
 }
@@ -408,6 +473,8 @@ canvas {
 .checkbox-label {
   font-size: 0.9rem;
   color: var(--muted);
+  margin: 8px;
+  width: 100%;
 }
 
 .hidden {
@@ -435,4 +502,34 @@ canvas {
 
 .smaller {
   font-size: 0.65rem;
+}
+
+/* Modal styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal.is-open {
+  display: block;
+}
+
+.modal__aboutcontainer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px;
+  border-radius: 10px;
+  width: 500px;
+  height: 500px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text);
 }

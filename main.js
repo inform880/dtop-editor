@@ -2,6 +2,20 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 
+const errorToast = (text, isError) =>
+  Toastify({
+    text: text,
+    duration: 3000,
+    close: true,
+    gravity: "top", // `top` or `bottom`
+    position: "left", // `left`, `center` or `right`
+    stopOnFocus: true, // Prevents dismissing of toast on hover
+    style: {
+      background: isError ? "#ff5353" : "#53b3ff",
+    },
+    onClick: function () { }, // Callback after click
+  }).showToast();
+
 // ---------- Utilities ----------
 const DEG = Math.PI / 180,
   RAD = 180 / Math.PI;
@@ -74,10 +88,7 @@ orbit.target.set(0, 1.0, 0);
 const tctrl = new TransformControls(camera, renderer.domElement);
 tctrl.setMode("rotate");
 tctrl.setSize(0.76);
-tctrl.addEventListener(
-  "dragging-changed",
-  (e) => (orbit.enabled = !e.value)
-);
+tctrl.addEventListener("dragging-changed", (e) => (orbit.enabled = !e.value));
 scene.add(tctrl.getHelper());
 
 // Repaint whenever controls change camera or gizmo state
@@ -317,8 +328,7 @@ const ikHandles = {
 };
 
 const bindLocalPos = new Map();
-for (const [name, b] of bonesByName)
-  bindLocalPos.set(name, b.position.clone());
+for (const [name, b] of bonesByName) bindLocalPos.set(name, b.position.clone());
 
 // IK state (FK by default)
 const ikMode = {
@@ -390,16 +400,12 @@ function alignMidToPole(p0, p1, p2, poleDirWorld) {
   const dot = THREE.MathUtils.clamp(nCur.dot(nDes), -1, 1);
   let ang = Math.acos(dot);
   const sgn =
-    Math.sign(new THREE.Vector3().crossVectors(nCur, nDes).dot(axis)) ||
-    1;
+    Math.sign(new THREE.Vector3().crossVectors(nCur, nDes).dot(axis)) || 1;
   ang *= sgn;
 
   // Rotate p1 around the axis (through p0)
   const q = new THREE.Quaternion().setFromAxisAngle(axis, ang);
-  const p1r = new THREE.Vector3()
-    .subVectors(p1, p0)
-    .applyQuaternion(q)
-    .add(p0);
+  const p1r = new THREE.Vector3().subVectors(p1, p0).applyQuaternion(q).add(p0);
   return p1r;
 }
 
@@ -409,8 +415,7 @@ function setMode(mode) {
   updateToolbarMode(mode);
 }
 function updateToolbarMode(mode) {
-  byId("mode-translate").dataset.state =
-    mode === "translate" ? "active" : "";
+  byId("mode-translate").dataset.state = mode === "translate" ? "active" : "";
   byId("mode-rotate").dataset.state = mode === "rotate" ? "active" : "";
 }
 function setSpace(space) {
@@ -467,8 +472,7 @@ const posX = byId("pos-x"),
   posY = byId("pos-y"),
   posZ = byId("pos-z");
 
-const toNum = (v) =>
-  Number.isFinite(parseFloat(v)) ? parseFloat(v) : 0;
+const toNum = (v) => (Number.isFinite(parseFloat(v)) ? parseFloat(v) : 0);
 
 rotX.addEventListener(
   "change",
@@ -508,24 +512,21 @@ posX.addEventListener(
   () =>
     selectedBone &&
     selectedBone.name === "Root" &&
-    ((selectedBone.position.x = parseFloat(posX.value)),
-      markPoseDirty())
+    ((selectedBone.position.x = parseFloat(posX.value)), markPoseDirty())
 );
 posY.addEventListener(
   "change",
   () =>
     selectedBone &&
     selectedBone.name === "Root" &&
-    ((selectedBone.position.y = parseFloat(posY.value)),
-      markPoseDirty())
+    ((selectedBone.position.y = parseFloat(posY.value)), markPoseDirty())
 );
 posZ.addEventListener(
   "change",
   () =>
     selectedBone &&
     selectedBone.name === "Root" &&
-    ((selectedBone.position.z = parseFloat(posZ.value)),
-      markPoseDirty())
+    ((selectedBone.position.z = parseFloat(posZ.value)), markPoseDirty())
 );
 
 function eulerDeg(bone) {
@@ -549,9 +550,12 @@ function updateInspectorUI() {
   const name = selectedBone ? selectedBone.name : "Root";
   byId("inspector-joint").textContent = name;
   const lim = jointLimits[name] || {};
-  byId("lim-x").textContent = `limits: ${lim.x ? `${lim.x[0]}, ${lim.x[1]}` : "*"}`;
-  byId("lim-y").textContent = `limits: ${lim.y ? `${lim.y[0]}, ${lim.y[1]}` : "*"}`;
-  byId("lim-z").textContent = `limits: ${lim.z ? `${lim.z[0]}, ${lim.z[1]}` : "*"}`;
+  byId("lim-x").textContent = `limits: ${lim.x ? `${lim.x[0]}, ${lim.x[1]}` : "*"
+    }`;
+  byId("lim-y").textContent = `limits: ${lim.y ? `${lim.y[0]}, ${lim.y[1]}` : "*"
+    }`;
+  byId("lim-z").textContent = `limits: ${lim.z ? `${lim.z[0]}, ${lim.z[1]}` : "*"
+    }`;
   // Position: only Root is editable
   const rootEditable = name === "Root";
   for (const el of [posX, posY, posZ]) {
@@ -573,7 +577,9 @@ function updateInspectorUIValuesOnly() {
   posZ.value = p.z.toFixed(2);
 }
 
-queueMicrotask(() => selectBoneByName("Root"));
+queueMicrotask(() => {
+  selectBoneByName("Root");
+});
 
 // ---------- Picking ----------
 function onPointerDown(e) {
@@ -642,13 +648,10 @@ function limbFromEnd(endName) {
   }
 }
 function chainForLimb(limb) {
-  if (limb === "LeftArm")
-    return ["LeftShoulder", "LeftElbow", "LeftWrist"];
-  if (limb === "RightArm")
-    return ["RightShoulder", "RightElbow", "RightWrist"];
+  if (limb === "LeftArm") return ["LeftShoulder", "LeftElbow", "LeftWrist"];
+  if (limb === "RightArm") return ["RightShoulder", "RightElbow", "RightWrist"];
   if (limb === "LeftLeg") return ["LeftHip", "LeftKnee", "LeftAnkle"];
-  if (limb === "RightLeg")
-    return ["RightHip", "RightKnee", "RightAnkle"];
+  if (limb === "RightLeg") return ["RightHip", "RightKnee", "RightAnkle"];
   return [];
 }
 // Attach transform control to IK handle
@@ -685,11 +688,7 @@ function solveIKForLimb(limb, fromMirror = false) {
   if (dist > totalLen) {
     // forward pass only
     for (let i = 0; i < pts.length - 1; i++) {
-      const r = target
-        .clone()
-        .sub(pts[i])
-        .normalize()
-        .multiplyScalar(lens[i]);
+      const r = target.clone().sub(pts[i]).normalize().multiplyScalar(lens[i]);
       pts[i + 1] = pts[i].clone().add(r);
     }
   } else {
@@ -733,9 +732,7 @@ function solveIKForLimb(limb, fromMirror = false) {
       const nextPos = pts[i + 1];
       const dirWorld = nextPos.clone().sub(pts[i]).normalize();
       // Express that direction in the PARENT’S LOCAL space:
-      const parentWQ = bone.parent.getWorldQuaternion(
-        new THREE.Quaternion()
-      );
+      const parentWQ = bone.parent.getWorldQuaternion(new THREE.Quaternion());
       const parentWQInv = parentWQ.clone().invert();
       const dirLocal = dirWorld
         .clone()
@@ -767,19 +764,10 @@ function solveIKForLimb(limb, fromMirror = false) {
       // Clamp after solve (softly)
       const lim = jointLimits[bone.name];
       if (lim) {
-        const e = new THREE.Euler().setFromQuaternion(
-          bone.quaternion,
-          "XYZ"
-        );
-        const ex = lim.x
-          ? clamp(e.x * RAD, lim.x[0], lim.x[1])
-          : e.x * RAD;
-        const ey = lim.y
-          ? clamp(e.y * RAD, lim.y[0], lim.y[1])
-          : e.y * RAD;
-        const ez = lim.z
-          ? clamp(e.z * RAD, lim.z[0], lim.z[1])
-          : e.z * RAD;
+        const e = new THREE.Euler().setFromQuaternion(bone.quaternion, "XYZ");
+        const ex = lim.x ? clamp(e.x * RAD, lim.x[0], lim.x[1]) : e.x * RAD;
+        const ey = lim.y ? clamp(e.y * RAD, lim.y[0], lim.y[1]) : e.y * RAD;
+        const ez = lim.z ? clamp(e.z * RAD, lim.z[0], lim.z[1]) : e.z * RAD;
         bone.quaternion.setFromEuler(
           new THREE.Euler(ex * DEG, ey * DEG, ez * DEG, "XYZ")
         );
@@ -874,9 +862,7 @@ function mirrorPartnerLimb(limb) {
     : limb.replace("Right", "Left");
   const srcEnd = chainForLimb(limb).slice(-1)[0];
   const dstEnd = chainForLimb(other).slice(-1)[0];
-  const src = bonesByName
-    .get(srcEnd)
-    .getWorldPosition(new THREE.Vector3());
+  const src = bonesByName.get(srcEnd).getWorldPosition(new THREE.Vector3());
   const dst = new THREE.Vector3(-src.x, src.y, src.z); // mirror end-effector target across X
   ikHandles[other].position.copy(dst);
   solveIKForLimb(other, /*fromMirror=*/ true);
@@ -1099,29 +1085,54 @@ function exportOpenPoseJSON({ normalize = true } = {}) {
   const a = document.createElement("a");
   const ts = new Date().toISOString().replace(/[:.]/g, "-");
   a.href = URL.createObjectURL(blob);
-  a.download = `openpose_body25_${normalize ? "norm01" : "px"
-    }_${ts}.json`;
+  a.download = `openpose_body25_${normalize ? "norm01" : "px"}_${ts}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
 
+function exportOpenPoseClipboard({ normalize = true } = {}) {
+  // Single-person export compatible with OpenPose JSON
+  const pose2d = buildOpenPoseBody25({ normalize });
+
+  const payload = {
+    people: [
+      {
+        pose_keypoints_2d: pose2d,
+      },
+    ],
+  };
+  navigator.clipboard.writeText(JSON.stringify(payload)).then(
+    () => {
+      errorToast("Copied OpenPose JSON to clipboard!", false);
+    },
+    () => {
+      errorToast("Failed to copy OpenPose JSON to clipboard.", true);
+    }
+  );
+}
+
 // Hook up the button
 document.getElementById("export-openpose").onclick = () => {
-  const normalize =
-    !!document.getElementById("openpose-normalize")?.checked;
+  const normalize = !!document.getElementById("openpose-normalize")?.checked;
   exportOpenPoseJSON({ normalize });
+};
+document.getElementById("copy-openpose").onclick = () => {
+  const normalize = !!document.getElementById("openpose-normalize")?.checked;
+  exportOpenPoseClipboard({ normalize });
 };
 byId("save-pose").onclick = () => {
   const name =
     byId("pose-name").value.trim() ||
-    `${new Date().toLocaleString([], {
-      hour: "numeric",
-      hour12: false,
-      day: "numeric",
-      month: "numeric",
-      minute: "numeric",
-      second: "numeric"
-    }).replace(", ", "-")}`;
+    `${new Date()
+      .toLocaleString([], {
+        hour: "numeric",
+        hour12: false,
+        day: "numeric",
+        month: "numeric",
+        minute: "numeric",
+        second: "numeric",
+      })
+      .replace(", ", "-")}`;
   const pose = currentPoseAsJSON();
   const thumb = captureThumbnail();
   const lib = loadLibrary();
@@ -1151,8 +1162,7 @@ byId("import-library").onchange = (e) => {
   reader.onload = () => {
     try {
       const data = JSON.parse(reader.result);
-      if (!data || !Array.isArray(data.poses))
-        throw new Error("Invalid file");
+      if (!data || !Array.isArray(data.poses)) throw new Error("Invalid file");
       saveLibrary(data);
       refreshThumbs();
       setStatus(`Imported ${data.poses.length} poses`);
@@ -1268,14 +1278,10 @@ byId("screenshot").onclick = () => {
 };
 
 // ---------- FK/IK toggles UI ----------
-byId("ik-left-arm").onchange = (e) =>
-  setIKMode("LeftArm", e.target.value);
-byId("ik-right-arm").onchange = (e) =>
-  setIKMode("RightArm", e.target.value);
-byId("ik-left-leg").onchange = (e) =>
-  setIKMode("LeftLeg", e.target.value);
-byId("ik-right-leg").onchange = (e) =>
-  setIKMode("RightLeg", e.target.value);
+byId("ik-left-arm").onchange = (e) => setIKMode("LeftArm", e.target.value);
+byId("ik-right-arm").onchange = (e) => setIKMode("RightArm", e.target.value);
+byId("ik-left-leg").onchange = (e) => setIKMode("LeftLeg", e.target.value);
+byId("ik-right-leg").onchange = (e) => setIKMode("RightLeg", e.target.value);
 
 function setIKMode(limb, mode) {
   ikMode[limb] = mode;
@@ -1285,9 +1291,7 @@ function setIKMode(limb, mode) {
     const endName = chainForLimb(limb).slice(-1)[0];
     const end = bonesByName.get(endName);
     scene.updateMatrixWorld(true);
-    ikHandles[limb].position.copy(
-      end.getWorldPosition(new THREE.Vector3())
-    );
+    ikHandles[limb].position.copy(end.getWorldPosition(new THREE.Vector3()));
     ikHandles[limb].userData.isIKHandle = true;
     ikHandles[limb].userData.limb = limb;
   } else {
@@ -1295,7 +1299,6 @@ function setIKMode(limb, mode) {
     if (tctrl.object === ikHandles[limb]) tctrl.detach();
   }
 }
-
 
 // ---------- Keyboard shortcuts ----------
 window.addEventListener("keydown", (e) => {
@@ -1317,6 +1320,10 @@ window.addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === "s") {
     e.preventDefault();
     byId("save-pose").click();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+    e.preventDefault();
+    byId("copy-openpose").click();
   }
   markPoseDirty();
 });
@@ -1416,9 +1423,7 @@ const ro = new ResizeObserver(() => {
   markPoseDirty();
 });
 ro.observe(viewportEl);
-renderer.domElement.addEventListener("pointermove", () =>
-  markPoseDirty()
-);
+renderer.domElement.addEventListener("pointermove", () => markPoseDirty());
 document.addEventListener("input", () => markPoseDirty());
 document.addEventListener("change", () => markPoseDirty());
 
@@ -1428,14 +1433,16 @@ function toggleState(el, active) {
 }
 
 // Activate gizmo buttons & space buttons
-byId("mode-translate").addEventListener("click", () =>
-  setMode("translate")
-);
+byId("mode-translate").addEventListener("click", () => setMode("translate"));
 byId("mode-rotate").addEventListener("click", () => setMode("rotate"));
 byId("space-local").addEventListener("click", () => setSpace("local"));
 byId("space-world").addEventListener("click", () => setSpace("world"));
 
+document.addEventListener('DOMContentLoaded', () => {
+  MicroModal.init({
+    onClose: () => { console.log('close') }
+  })
+});
+
 // ---------- Final small touches ----------
-setStatus(
-  "Ready. Click a joint sphere to select. Use E/W to switch gizmos."
-);
+setStatus("Ready. Click a joint sphere to select. Use E/W to switch gizmos.");

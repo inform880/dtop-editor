@@ -4,9 +4,16 @@
 <meta charset="utf-8"/>
 <title>OpenPose 3D – Browser Pose Editor</title>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <!-- Three.js (pinned) + controls -->
 <!-- Polyfill to support import maps in every modern browser -->
+<script src="https://cdn.jsdelivr.net/npm/micromodal/dist/micromodal.min.js"></script>
 <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
+>
 <!-- Import map: single source of truth for Three.js + addons -->
 <script type="importmap">
       {
@@ -18,6 +25,12 @@
       }
 </script>
 <link rel="stylesheet" href="styles.css"/>
+<script
+  data-goatcounter="https://dtop-editor.goatcounter.com/count"
+  async
+  src="//gc.zgo.at/count.js"
+></script>
+<script type="module" src="./main.js"></script>
 </head>
 <body>
 <div class="app">
@@ -46,7 +59,9 @@
         id="reset-pose"
         title="Reset pose"
         class="hidden"
-      >Reset</button>
+      >
+        Reset
+      </button>
       <div class="divider hidden"></div>
       <button id="symmetry" title="Symmetry">Symmetry</button>
       <div class="divider"></div>
@@ -72,6 +87,22 @@
         Grid
       </button>
       <button id="screenshot" title="Save viewport PNG">Screenshot</button>
+      <div class="divider"></div>
+      <button
+        id="about"
+        title="About"
+        data-micromodal-trigger="modal-about"
+        style="font-weight: 900;"
+      >
+        ⓘ
+      </button>
+      <button
+        id="about"
+        title="About & Controls"
+        data-micromodal-trigger="modal-shortcuts"
+      >
+        ⌨️
+      </button>
     </div>
     <div class="status" id="status">Ready.</div>
   </div>
@@ -189,8 +220,8 @@
     </div>
     <div class="right-bottom">
       <div class="group">
-        <h3>OpenPose Export</h3>
-        <div class="col">
+        <h3>OpenPose Export (Draw Things)</h3>
+        <div>
           <label class="checkbox-label">Normalize:</label>
           <input
             id="openpose-normalize"
@@ -198,8 +229,9 @@
             checked
           />
         </div>
-        <div class="row">
-          <button id="export-openpose">Export OpenPose (Draw Things)</button>
+        <div class="col">
+          <button id="export-openpose">Export to JSON file</button>
+          <button id="copy-openpose">Copy to Clipboard</button>
         </div>
       </div>
       <div class="group">
@@ -287,32 +319,92 @@
           </select>
         </div>
       </div>
-      <div class="group">
-        <h3>Controls & Shortcuts</h3>
-        <div class="row">
-          <span class="note small">Orbit: drag, Pan: right‑drag, Zoom: wheel</span>
-          <span class="muted small">
-            <span class="kbd">W</span>
-            Translate •
-            <span class="kbd">E</span>
-            Rotate •
-            <span class="kbd">F</span>
-            Frame Selected •
-            <span class="kbd">G</span>
-            Grid •
-            <span class="kbd">Ctrl/Cmd + S</span>
-            Save Pose
-          </span>
-        </div>
-      </div>
     </div>
   </div>
 </div>
-<script type="module" src="./main.js"></script>
-<script
-  data-goatcounter="https://dtop-editor.goatcounter.com/count"
-  async
-  src="//gc.zgo.at/count.js"
-></script>
+<div
+  class="modal"
+  id="modal-about"
+  aria-hidden="true"
+>
+  <div class="modal__overlay" tabindex="-1">
+    <div
+      class="modal__aboutcontainer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-about-title"
+    >
+      <button
+        class="modal__close"
+        aria-label="Close modal"
+        data-micromodal-close
+      >X</button>
+      <h3 class="modal__title" id="modal-about-title">About</h3>
+      <span class="note">Soom TM</span>
+    </div>
+  </div>
+</div>
+<div
+  class="modal"
+  id="modal-shortcuts"
+  aria-hidden="true"
+>
+  <div class="modal__overlay" tabindex="-1">
+    <div
+      class="shortcuts-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-shortcuts-title"
+    >
+      <button
+        class="modal__close"
+        aria-label="Close modal"
+        data-micromodal-close
+      >X</button>
+      <table class="shortcuts-table">
+        <tr>
+          <th>Shortcut</th>
+          <th>Action</th>
+        </tr>
+        <tr>
+          <td>
+            <code class="shortcut-key">W</code>
+          </td>
+          <td>Enable translate tool</td>
+        </tr>
+        <tr>
+          <td>
+            <code class="shortcut-key">E</code>
+          </td>
+          <td>Enable rotate tool</td>
+        </tr>
+        <tr>
+          <td>
+            <code class="shortcut-key">F</code>
+          </td>
+          <td>Frame selected joint</td>
+        </tr>
+        <tr>
+          <td>
+            <code class="shortcut-key">G</code>
+          </td>
+          <td>Toggle grid</td>
+        </tr>
+        <tr>
+          <td>
+            <code class="shortcut-key">Ctrl/Cmd + S</code>
+          </td>
+          <td>Save pose to library</td>
+        </tr>
+        <tr>
+          <td>
+            <code class="shortcut-key">Ctrl/Cmd + C</code>
+          </td>
+          <td>Copy OpenPose to clipboard</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
 </body>
 </html>
