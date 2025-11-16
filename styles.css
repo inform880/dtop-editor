@@ -258,6 +258,7 @@ button {
   font-size: 0.95rem;
   cursor: pointer;
   text-wrap-mode: nowrap;
+  text-align: center;
 }
 
 .button:hover {
