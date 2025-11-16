@@ -31,12 +31,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Minify Action
+        uses: dra1ex/minify-action@v1.0.3
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Minify Css Js and Html files in GitHub Action
-        uses: amireshoon/minifyAction@v1.1
-        with:
-          repo: ${{ github.repository }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
