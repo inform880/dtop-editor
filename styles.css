@@ -237,25 +237,13 @@ input[type="range"] {
   cursor: pointer;
 }
 
-button {
-  background: #121a2c;
-  border: 1px solid #1b2335;
-  color: var(--text);
-  border-radius: 8px;
-  padding: 6px 10px;
-  cursor: pointer;
-  text-wrap-mode: nowrap;
-}
-
 .button {
   background: #121a2c;
   border: 1px solid #1b2335;
   color: var(--text);
   border-radius: 8px;
-  font-size: 1rem;
-  padding: 6px 10px;
+  padding: 6px 8px;
   font-weight: 400;
-  font-size: 0.95rem;
   cursor: pointer;
   text-wrap-mode: nowrap;
   text-align: center;
@@ -356,36 +344,35 @@ canvas {
   color: #c8d2e6;
 }
 
-.tree {
-  padding: 0;
-}
-
-.tree ul {
+#tree ul {
   list-style: none;
-  padding-left: 8px;
-  margin: 0;
+  padding-left: 6px;
+  margin: 4px 0;
 }
 
-.tree li {
-  margin: 2px 0;
+.tree-item-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.tree button {
-  background: transparent;
-  border: none;
-  padding: 2px 4px;
-  color: var(--text);
+.tree-toggle {
+  display: inline-block;
+  width: 0.3em;
   cursor: pointer;
-  border-radius: 6px;
+  user-select: none;
 }
 
-.tree button:hover {
-  background: #151c30;
+.tree-children {
+  margin-left: 0.8rem;
 }
 
-.tree .sel {
-  background: #1a2745;
-  border: 1px solid #22355c;
+.tree-collapsed {
+  display: none;
+}
+
+.tree-no-children .tree-toggle {
+  visibility: hidden;
 }
 
 .kv {
@@ -483,6 +470,10 @@ canvas {
 }
 
 .right .group:last-child {
+  border-bottom: none;
+}
+
+.left .group:last-child {
   border-bottom: none;
 }
 

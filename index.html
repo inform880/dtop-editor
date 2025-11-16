@@ -36,11 +36,16 @@
   <!-- Top toolbar -->
   <div class="topbar">
     <div class="toolbar">
-      <button id="mode-translate" title="Translate (W)">Translate</button>
+      <button
+        id="mode-translate"
+        title="Translate (W)"
+        class="button"
+      >Translate</button>
       <button
         id="mode-rotate"
         data-state="active"
         title="Rotate (E)"
+        class="button"
       >
         Rotate
       </button>
@@ -49,10 +54,15 @@
         id="space-local"
         data-state="active"
         title="Local space"
+        class="button"
       >
         Local
       </button>
-      <button id="space-world" title="World space">World</button>
+      <button
+        id="space-world"
+        class="button"
+        title="World space"
+      >World</button>
       <div class="divider"></div>
       <button
         id="reset-pose"
@@ -62,19 +72,32 @@
         Reset
       </button>
       <div class="divider hidden"></div>
-      <button id="symmetry" title="Symmetry">Symmetry</button>
+      <button
+        id="symmetry"
+        class="button"
+        title="Mirror lock across the spine"
+      >Symmetry</button>
       <div class="divider"></div>
       <button
         id="cam-persp"
         data-state="active"
         title="Perspective camera"
+        class="button"
       >
         Persp
       </button>
-      <button id="cam-ortho-front" title="Orthographic Front lock">
+      <button
+        id="cam-ortho-front"
+        class="button"
+        title="Orthographic Front lock"
+      >
         Ort Front
       </button>
-      <button id="cam-ortho-side" title="Orthographic Side lock">
+      <button
+        id="cam-ortho-side"
+        class="button"
+        title="Orthographic Side lock"
+      >
         Ort Side
       </button>
       <div class="divider"></div>
@@ -82,16 +105,21 @@
         id="toggle-grid"
         data-state="active"
         title="Toggle grid"
+        class="button"
       >
         Grid
       </button>
-      <button id="screenshot" title="Save viewport PNG">Screenshot</button>
+      <button
+        id="screenshot"
+        title="Save viewport PNG"
+        class="button"
+      >Screenshot</button>
       <div class="divider"></div>
       <button
         id="about"
         title="About"
         data-micromodal-trigger="modal-about"
-        style="font-weight: 900;"
+        class="button"
       >
         ⓘ
       </button>
@@ -99,6 +127,7 @@
         id="about"
         title="About & Controls"
         data-micromodal-trigger="modal-shortcuts"
+        class="button"
       >
         ⌨️
       </button>
@@ -229,8 +258,8 @@
           />
         </div>
         <div class="col">
-          <button id="export-openpose">Export to JSON file</button>
-          <button id="copy-openpose">Copy to Clipboard</button>
+          <button id="export-openpose" class="button">Export to JSON file</button>
+          <button id="copy-openpose" class="button">Copy to Clipboard</button>
         </div>
       </div>
       <div class="group">
@@ -334,7 +363,7 @@
       aria-labelledby="modal-about-title"
     >
       <button
-        class="modal__close"
+        class="modal__close button"
         aria-label="Close modal"
         data-micromodal-close
       >
@@ -373,7 +402,7 @@
       aria-labelledby="modal-shortcuts-title"
     >
       <button
-        class="modal__close"
+        class="modal__close button"
         aria-label="Close modal"
         data-micromodal-close
       >X</button>

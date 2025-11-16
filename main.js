@@ -452,34 +452,67 @@ function setSpace(space) {
 }
 
 // ---------- Hierarchy UI ----------
+// Existing helper
+// function byId(id) { ... }
+// bonesByName: Map
+// selectBoneByName(name): your existing function
+
 function buildTree() {
   const treeEl = byId("tree");
   treeEl.innerHTML = "";
+
   function buildNode(name) {
     const b = bonesByName.get(name);
     const li = document.createElement("li");
+    li.classList.add("tree-item");
 
+    // --- Label container (icon + button) ---
+    const label = document.createElement("div");
+    label.classList.add("tree-item-label");
+
+    // Collapse/expand icon
+    const icon = document.createElement("span");
+    icon.classList.add("tree-toggle");
+    icon.textContent = ""; // set later depending on children
+
+    // Your existing button
     const btn = document.createElement("button");
     btn.textContent = name;
     btn.onclick = () => selectBoneByName(name);
     btn.id = `tree-${name}`;
-    li.appendChild(btn);
+    btn.classList = "button"
 
+    label.appendChild(icon);
+    label.appendChild(btn);
+    li.appendChild(label);
+
+    // --- Children (if any) ---
     const kids = b.children.filter((c) => c.isBone);
     if (kids.length) {
+      icon.textContent = "▼"; // collapsed by default
+
       const ul = document.createElement("ul");
+      ul.classList.add("tree-children"); // start collapsed
+
       for (const k of kids) {
         ul.appendChild(buildNode(k.name));
       }
       li.appendChild(ul);
+    } else {
+      // No children => no toggle icon
+      li.classList.add("tree-no-children");
     }
+
     return li;
   }
+
   const rootBone = bonesByName.get("Root");
   const ul = document.createElement("ul");
   ul.appendChild(buildNode(rootBone.name));
   treeEl.appendChild(ul);
 }
+
+// Your existing selection update stays the same
 function updateTreeSelection(name) {
   for (const [n, _] of bonesByName) {
     const el = byId(`tree-${n}`);
@@ -489,6 +522,31 @@ function updateTreeSelection(name) {
   }
 }
 
+// --- NEW: one-time event delegation to handle collapsing ---
+const treeContainer = byId("tree");
+treeContainer.addEventListener("click", (e) => {
+  // Only toggle when clicking on the icon, not the button
+  const toggle = e.target.closest(".tree-toggle");
+  if (!toggle) return;
+
+  const li = toggle.closest("li");
+  if (!li) return;
+
+  const childrenContainer = li.querySelector(":scope > .tree-children");
+  if (!childrenContainer) return; // leaf node
+
+  const isCollapsed = childrenContainer.classList.contains("tree-collapsed");
+
+  if (isCollapsed) {
+    childrenContainer.classList.remove("tree-collapsed");
+    toggle.textContent = "▼";
+  } else {
+    childrenContainer.classList.add("tree-collapsed");
+    toggle.textContent = "▶";
+  }
+});
+
+// Build initially
 buildTree();
 
 // ---------- Inspector ----------
@@ -959,10 +1017,10 @@ function refreshThumbs() {
     butContainer.className = "button-container";
     const del = document.createElement("button");
     del.textContent = "Delete";
-    del.className = "smaller";
+    del.className = "smaller button";
     // const over = document.createElement("button");
     // over.textContent = "Overwrite";
-    // over.className = "small";
+    // over.className = "smaller button";
     card.appendChild(img);
     cap.appendChild(name);
     cap.appendChild(butContainer);
