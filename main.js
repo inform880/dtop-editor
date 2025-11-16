@@ -71,7 +71,7 @@ rim.position.set(-3, 3, -3);
 scene.add(rim);
 
 // Grid & axes
-const grid = new THREE.GridHelper(10, 20, 0x26406d, 0x1c2947);
+const grid = new THREE.GridHelper(5, 20, 0x26406d, 0x1c2947);
 grid.position.y = 0;
 scene.add(grid);
 let gridVisible = true;
@@ -1439,9 +1439,7 @@ byId("space-local").addEventListener("click", () => setSpace("local"));
 byId("space-world").addEventListener("click", () => setSpace("world"));
 
 document.addEventListener('DOMContentLoaded', () => {
-  MicroModal.init({
-    onClose: () => { console.log('close') }
-  })
+  MicroModal.init()
 });
 
 // ---------- Final small touches ----------

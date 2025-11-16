@@ -73,7 +73,7 @@
 .shortcuts-table .shortcut-key {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: px;
+  border-radius: 8px;
   background: var(--panel2);
   border: 1px solid var(--line);
   font-size: 0.9rem;
