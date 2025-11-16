@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
+import { SkeletonHelper } from './customSkeletonHelper.js';
 
 const errorToast = (text, isError) =>
   Toastify({
@@ -268,9 +269,10 @@ function getPoleDirWorld(limb) {
 }
 
 // Skeleton visual helper (lines)
-const skelHelper = new THREE.SkeletonHelper(rootObj);
-skelHelper.material.linewidth = 30; // ignored on most browsers, but harmless
-skelHelper.material.color = new THREE.Color(0x5aaaff);
+const skelHelper = new SkeletonHelper(rootObj, {
+  linewidth: 6,
+  color: new THREE.Color(0xff0000)
+});
 scene.add(skelHelper);
 
 // Joints as clickable spheres
