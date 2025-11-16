@@ -131,13 +131,13 @@ const boneSpec = [
   ["RightWrist", "RightElbow", [0.0, -0.26, 0]],
   ["RightHand", "RightWrist", [0.0, -0.1, 0]],
   // hips / legs
-  ["LeftHip", "Pelvis", [0.1, -0.03, 0]],
-  ["LeftKnee", "LeftHip", [0.0, -0.42, 0]],
-  ["LeftAnkle", "LeftKnee", [0.0, -0.42, 0]],
+  ["LeftHip", "Pelvis", [0.1, -0.19, 0]],
+  ["LeftKnee", "LeftHip", [0.0, -0.38, 0]],
+  ["LeftAnkle", "LeftKnee", [0.0, -0.38, 0]],
   ["LeftFoot", "LeftAnkle", [0.08, 0.0, 0.12]], // small forward foot
-  ["RightHip", "Pelvis", [-0.1, -0.03, 0]],
-  ["RightKnee", "RightHip", [0.0, -0.42, 0]],
-  ["RightAnkle", "RightKnee", [0.0, -0.42, 0]],
+  ["RightHip", "Pelvis", [-0.1, -0.19, 0]],
+  ["RightKnee", "RightHip", [0.0, -0.38, 0]],
+  ["RightAnkle", "RightKnee", [0.0, -0.38, 0]],
   ["RightFoot", "RightAnkle", [-0.08, 0.0, 0.12]],
 ];
 
