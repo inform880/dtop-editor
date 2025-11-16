@@ -1,4 +1,29 @@
-import * as THREE from "three";
+import {
+  WebGLRenderer,
+  PerspectiveCamera,
+  OrthographicCamera,
+  Scene,
+  AmbientLight,
+  DirectionalLight,
+  GridHelper,
+  AxesHelper,
+  Raycaster,
+  Vector2,
+  Object3D,
+  Bone,
+  Vector3,
+  Quaternion,
+  Color,
+  Group,
+  Mesh,
+  SphereGeometry,
+  MeshStandardMaterial,
+  BoxGeometry,
+  Euler,
+  MathUtils,
+  Matrix4,
+  Box3,
+} from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { SkeletonHelper } from './customSkeletonHelper.js';
@@ -26,7 +51,7 @@ const setStatus = (t) => (byId("status").textContent = t);
 
 // ---------- Scene ----------
 const viewportEl = byId("viewport");
-const renderer = new THREE.WebGLRenderer({
+const renderer = new WebGLRenderer({
   antialias: true,
   alpha: true,
   preserveDrawingBuffer: true,
@@ -37,7 +62,7 @@ renderer.setClearColor(0x000000, 0); // transparent to show reference image
 viewportEl.appendChild(renderer.domElement);
 
 // Perspective & Ortho cameras
-const persp = new THREE.PerspectiveCamera(
+const persp = new PerspectiveCamera(
   45,
   viewportEl.clientWidth / viewportEl.clientHeight,
   0.01,
@@ -46,7 +71,7 @@ const persp = new THREE.PerspectiveCamera(
 persp.position.set(2.2, 1.8, 2.6);
 
 const orthoSize = 2.2;
-const ortho = new THREE.OrthographicCamera(
+const ortho = new OrthographicCamera(
   -orthoSize,
   orthoSize,
   orthoSize,
@@ -60,24 +85,24 @@ ortho.lookAt(0, 1, 0);
 let camera = persp;
 let needsRender = true;
 
-const scene = new THREE.Scene();
+const scene = new Scene();
 
 // Lights
-scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-const key = new THREE.DirectionalLight(0xffffff, 0.9);
+scene.add(new AmbientLight(0xffffff, 0.6));
+const key = new DirectionalLight(0xffffff, 0.9);
 key.position.set(3, 5, 3);
 scene.add(key);
-const rim = new THREE.DirectionalLight(0xffffff, 0.3);
+const rim = new DirectionalLight(0xffffff, 0.3);
 rim.position.set(-3, 3, -3);
 scene.add(rim);
 
 // Grid & axes
-const grid = new THREE.GridHelper(5, 20, 0x26406d, 0x1c2947);
+const grid = new GridHelper(5, 20, 0x26406d, 0x1c2947);
 grid.position.y = 0;
 scene.add(grid);
 let gridVisible = true;
 
-const axes = new THREE.AxesHelper(0.25);
+const axes = new AxesHelper(0.25);
 axes.position.set(0, 0, 0);
 scene.add(axes);
 
@@ -101,13 +126,13 @@ renderer.domElement.addEventListener("wheel", () => markPoseDirty(), {
 renderer.domElement.style.touchAction = "none"; // better touch behavior
 
 // Picking
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
+const raycaster = new Raycaster();
+const mouse = new Vector2();
 renderer.domElement.addEventListener("pointerdown", onPointerDown);
 
 // ---------- Skeleton definition ----------
 /**
- * We model an OpenPose-like skeleton using THREE.Bone. All bones use local +Y as the "bone axis",
+ * We model an OpenPose-like skeleton using Bone. All bones use local +Y as the "bone axis",
  * which makes IK simpler (we align local +Y to the child direction). Left/right bones are mirrored along world X.
  * Units are meters. Default pose is relaxed A-pose.
  */
@@ -191,13 +216,13 @@ const jointLimits = {
 
 // Build skeleton (Bones + helper spheres for picking)
 const bonesByName = new Map();
-const rootObj = new THREE.Object3D();
+const rootObj = new Object3D();
 rootObj.name = "Armature";
 scene.add(rootObj);
 
 // Bone creation
 for (const [name, parentName, pos] of boneSpec) {
-  const b = new THREE.Bone();
+  const b = new Bone();
 
   b.name = name;
   b.position.fromArray(pos);
@@ -214,7 +239,7 @@ for (const [name, parentName, pos] of boneSpec) {
 for (const [name, b] of bonesByName) {
   // Default axis is +Y; if the bone has a child, use that offset direction.
   const childBone = b.children.find((c) => c.isBone);
-  const axis = new THREE.Vector3(0, 1, 0);
+  const axis = new Vector3(0, 1, 0);
   if (childBone) {
     axis.copy(childBone.position).normalize();
     if (axis.lengthSq() < 1e-9) axis.set(0, 1, 0);
@@ -234,14 +259,14 @@ function initPoleForLimb(limb) {
   // Make sure world matrices are current
   scene.updateMatrixWorld(true);
 
-  const p0 = b0.getWorldPosition(new THREE.Vector3());
-  const p1 = b1.getWorldPosition(new THREE.Vector3());
-  const p2 = b2.getWorldPosition(new THREE.Vector3());
+  const p0 = b0.getWorldPosition(new Vector3());
+  const p1 = b1.getWorldPosition(new Vector3());
+  const p2 = b2.getWorldPosition(new Vector3());
 
   // Bind-plane normal (points which way the elbow/knee "likes" to bend)
-  const nWorld = new THREE.Vector3().crossVectors(
-    new THREE.Vector3().subVectors(p1, p0),
-    new THREE.Vector3().subVectors(p2, p1)
+  const nWorld = new Vector3().crossVectors(
+    new Vector3().subVectors(p1, p0),
+    new Vector3().subVectors(p2, p1)
   );
 
   if (nWorld.lengthSq() < 1e-8) nWorld.set(0, 0, 1); // fallback "forward"
@@ -250,7 +275,7 @@ function initPoleForLimb(limb) {
   // Store it in the parent’s local space so it follows the torso/hips naturally
   const parent = b0.parent;
   const parentWQInv = parent
-    .getWorldQuaternion(new THREE.Quaternion())
+    .getWorldQuaternion(new Quaternion())
     .invert();
   const nLocal = nWorld.clone().applyQuaternion(parentWQInv);
 
@@ -263,28 +288,28 @@ function initPoleForLimb(limb) {
 // Helper: recover the pole direction in WORLD space at solve time
 function getPoleDirWorld(limb) {
   const rec = poleByLimb[limb];
-  if (!rec) return new THREE.Vector3(0, 0, 1);
-  const wq = rec.parent.getWorldQuaternion(new THREE.Quaternion());
+  if (!rec) return new Vector3(0, 0, 1);
+  const wq = rec.parent.getWorldQuaternion(new Quaternion());
   return rec.nLocal.clone().applyQuaternion(wq).normalize();
 }
 
 // Skeleton visual helper (lines)
 const skelHelper = new SkeletonHelper(rootObj, {
   linewidth: 6,
-  color: new THREE.Color(0xff0000)
+  color: new Color(0xff0000)
 });
 scene.add(skelHelper);
 
 // Joints as clickable spheres
-const jointGroup = new THREE.Group();
+const jointGroup = new Group();
 jointGroup.name = "JointSpheres";
 scene.add(jointGroup);
 
 const jointSpheres = new Map();
 for (const [name, b] of bonesByName) {
-  const sphere = new THREE.Mesh(
-    new THREE.SphereGeometry(0.018, 16, 12),
-    new THREE.MeshStandardMaterial({
+  const sphere = new Mesh(
+    new SphereGeometry(0.018, 16, 12),
+    new MeshStandardMaterial({
       color: name.includes("Left")
         ? 0x6be28c
         : name.includes("Right")
@@ -302,9 +327,9 @@ for (const [name, b] of bonesByName) {
 }
 
 function addIKHandle(endBoneName) {
-  const m = new THREE.Mesh(
-    new THREE.BoxGeometry(0.04, 0.04, 0.04),
-    new THREE.MeshStandardMaterial({
+  const m = new Mesh(
+    new BoxGeometry(0.04, 0.04, 0.04),
+    new MeshStandardMaterial({
       color: 0x2ed17a,
       emissive: 0x0,
       metalness: 0.2,
@@ -316,7 +341,7 @@ function addIKHandle(endBoneName) {
   scene.add(m);
   // place initially at end-effector
   const eb = bonesByName.get(endBoneName);
-  const p = eb.getWorldPosition(new THREE.Vector3());
+  const p = eb.getWorldPosition(new Vector3());
   m.position.copy(p);
   return m;
 }
@@ -348,7 +373,7 @@ function selectBoneByName(name) {
 
   // update joint sphere highlight
   for (const [n, mesh] of jointSpheres) {
-    mesh.material.emissive = new THREE.Color(n === name ? 0x3856ff : 0);
+    mesh.material.emissive = new Color(n === name ? 0x3856ff : 0);
   }
   // Attach gizmo to the selected bone (unless null)
   if (b) {
@@ -363,7 +388,7 @@ function selectBoneByName(name) {
 }
 
 function alignMidToPole(p0, p1, p2, poleDirWorld) {
-  const axis = new THREE.Vector3().subVectors(p2, p0);
+  const axis = new Vector3().subVectors(p2, p0);
   const len = axis.length();
   if (len < 1e-6) return p1.clone();
   axis.multiplyScalar(1 / len);
@@ -376,12 +401,12 @@ function alignMidToPole(p0, p1, p2, poleDirWorld) {
   nDes.normalize();
 
   // Current bend normal from the triangle (p0, p1, p2)
-  const v0 = new THREE.Vector3().subVectors(p1, p0);
-  const v1 = new THREE.Vector3().subVectors(p2, p1);
-  let nCur = new THREE.Vector3().crossVectors(v0, v1);
+  const v0 = new Vector3().subVectors(p1, p0);
+  const v1 = new Vector3().subVectors(p2, p1);
+  let nCur = new Vector3().crossVectors(v0, v1);
   if (nCur.lengthSq() < 1e-12) {
     // Place p1 on the pole side at the same axial distance & radius as current
-    const to1 = new THREE.Vector3().subVectors(p1, p0);
+    const to1 = new Vector3().subVectors(p1, p0);
     const axial = axis.clone().multiplyScalar(to1.dot(axis));
     const radial = to1.clone().sub(axial);
     const r = radial.length();
@@ -391,23 +416,23 @@ function alignMidToPole(p0, p1, p2, poleDirWorld) {
       .sub(axis.clone().multiplyScalar(poleDirWorld.dot(axis)))
       .normalize();
     // Build an orthonormal basis (u = nDes × axis, v = nDes)
-    const u = new THREE.Vector3().crossVectors(nDes, axis).normalize();
+    const u = new Vector3().crossVectors(nDes, axis).normalize();
     const v = nDes; // already ⟂ axis
     const radialOnPole = u.multiplyScalar(radial.length()); // rotate to pole side
-    return new THREE.Vector3().addVectors(p0, axial).add(radialOnPole);
+    return new Vector3().addVectors(p0, axial).add(radialOnPole);
   }
   nCur.sub(axis.clone().multiplyScalar(nCur.dot(axis))).normalize();
 
   // Signed angle from current to desired normal around axis
-  const dot = THREE.MathUtils.clamp(nCur.dot(nDes), -1, 1);
+  const dot = MathUtils.clamp(nCur.dot(nDes), -1, 1);
   let ang = Math.acos(dot);
   const sgn =
-    Math.sign(new THREE.Vector3().crossVectors(nCur, nDes).dot(axis)) || 1;
+    Math.sign(new Vector3().crossVectors(nCur, nDes).dot(axis)) || 1;
   ang *= sgn;
 
   // Rotate p1 around the axis (through p0)
-  const q = new THREE.Quaternion().setFromAxisAngle(axis, ang);
-  const p1r = new THREE.Vector3().subVectors(p1, p0).applyQuaternion(q).add(p0);
+  const q = new Quaternion().setFromAxisAngle(axis, ang);
+  const p1r = new Vector3().subVectors(p1, p0).applyQuaternion(q).add(p0);
   return p1r;
 }
 
@@ -532,7 +557,7 @@ posZ.addEventListener(
 );
 
 function eulerDeg(bone) {
-  const e = new THREE.Euler().setFromQuaternion(bone.quaternion, "XYZ");
+  const e = new Euler().setFromQuaternion(bone.quaternion, "XYZ");
   return { x: e.x * RAD, y: e.y * RAD, z: e.z * RAD };
 }
 
@@ -541,7 +566,7 @@ function applyEulerDeg(bone, x, y, z, clampToLimits = true) {
   const cx = clampToLimits && lim.x ? clamp(x, lim.x[0], lim.x[1]) : x;
   const cy = clampToLimits && lim.y ? clamp(y, lim.y[0], lim.y[1]) : y;
   const cz = clampToLimits && lim.z ? clamp(z, lim.z[0], lim.z[1]) : z;
-  const e = new THREE.Euler(cx * DEG, cy * DEG, cz * DEG, "XYZ");
+  const e = new Euler(cx * DEG, cy * DEG, cz * DEG, "XYZ");
   bone.quaternion.setFromEuler(e);
   if (symmetryEnabled) mirrorPartnerOnEdit(bone);
   markPoseDirty();
@@ -675,7 +700,7 @@ function solveIKForLimb(limb, fromMirror = false) {
   const target = ikHandles[limb].position.clone();
 
   // Collect world positions and lengths
-  const pts = bones.map((b) => b.getWorldPosition(new THREE.Vector3()));
+  const pts = bones.map((b) => b.getWorldPosition(new Vector3()));
   const lens = [];
   for (let i = 0; i < pts.length - 1; i++)
     lens.push(pts[i].distanceTo(pts[i + 1]));
@@ -734,7 +759,7 @@ function solveIKForLimb(limb, fromMirror = false) {
       const nextPos = pts[i + 1];
       const dirWorld = nextPos.clone().sub(pts[i]).normalize();
       // Express that direction in the PARENT’S LOCAL space:
-      const parentWQ = bone.parent.getWorldQuaternion(new THREE.Quaternion());
+      const parentWQ = bone.parent.getWorldQuaternion(new Quaternion());
       const parentWQInv = parentWQ.clone().invert();
       const dirLocal = dirWorld
         .clone()
@@ -743,15 +768,15 @@ function solveIKForLimb(limb, fromMirror = false) {
 
       // Map bind axis -> desired local direction
       const bindAxis =
-        bone.userData.bindAxisLocal || new THREE.Vector3(0, 1, 0);
-      const qLocal = new THREE.Quaternion();
+        bone.userData.bindAxisLocal || new Vector3(0, 1, 0);
+      const qLocal = new Quaternion();
       const dot = bindAxis.dot(dirLocal);
       if (dot < -0.9995) {
         // Stable 180° rotation around an axis orthogonal to bindAxis
         const ortho =
           Math.abs(bindAxis.x) < 0.9
-            ? new THREE.Vector3(1, 0, 0)
-            : new THREE.Vector3(0, 0, 1);
+            ? new Vector3(1, 0, 0)
+            : new Vector3(0, 0, 1);
         const axis = ortho
           .clone()
           .sub(bindAxis.clone().multiplyScalar(ortho.dot(bindAxis)))
@@ -766,12 +791,12 @@ function solveIKForLimb(limb, fromMirror = false) {
       // Clamp after solve (softly)
       const lim = jointLimits[bone.name];
       if (lim) {
-        const e = new THREE.Euler().setFromQuaternion(bone.quaternion, "XYZ");
+        const e = new Euler().setFromQuaternion(bone.quaternion, "XYZ");
         const ex = lim.x ? clamp(e.x * RAD, lim.x[0], lim.x[1]) : e.x * RAD;
         const ey = lim.y ? clamp(e.y * RAD, lim.y[0], lim.y[1]) : e.y * RAD;
         const ez = lim.z ? clamp(e.z * RAD, lim.z[0], lim.z[1]) : e.z * RAD;
         bone.quaternion.setFromEuler(
-          new THREE.Euler(ex * DEG, ey * DEG, ez * DEG, "XYZ")
+          new Euler(ex * DEG, ey * DEG, ez * DEG, "XYZ")
         );
       }
     }
@@ -788,7 +813,7 @@ function solveIKForLimb(limb, fromMirror = false) {
 function syncIKHandles() {
   for (const [limb, handle] of Object.entries(ikHandles)) {
     const end = bonesByName.get(chainForLimb(limb).slice(-1)[0]);
-    const p = end.getWorldPosition(new THREE.Vector3());
+    const p = end.getWorldPosition(new Vector3());
     if (tctrl.object !== handle) {
       handle.position.copy(p);
     }
@@ -820,10 +845,10 @@ function partnerName(name) {
 let symmetryEnabled = false;
 function mirrorQuaternionAcrossX(q) {
   // M R M where M = diag(-1,1,1) (mirror across X). Convert to matrix, apply, then back to quaternion.
-  const m = new THREE.Matrix4().makeRotationFromQuaternion(q);
-  const M = new THREE.Matrix4().makeScale(-1, 1, 1);
-  const out = new THREE.Matrix4().copy(M).multiply(m).multiply(M);
-  const q2 = new THREE.Quaternion().setFromRotationMatrix(out);
+  const m = new Matrix4().makeRotationFromQuaternion(q);
+  const M = new Matrix4().makeScale(-1, 1, 1);
+  const out = new Matrix4().copy(M).multiply(m).multiply(M);
+  const q2 = new Quaternion().setFromRotationMatrix(out);
   return q2;
 }
 function mirrorBonePose(srcBone, dstBone) {
@@ -864,8 +889,8 @@ function mirrorPartnerLimb(limb) {
     : limb.replace("Right", "Left");
   const srcEnd = chainForLimb(limb).slice(-1)[0];
   const dstEnd = chainForLimb(other).slice(-1)[0];
-  const src = bonesByName.get(srcEnd).getWorldPosition(new THREE.Vector3());
-  const dst = new THREE.Vector3(-src.x, src.y, src.z); // mirror end-effector target across X
+  const src = bonesByName.get(srcEnd).getWorldPosition(new Vector3());
+  const dst = new Vector3(-src.x, src.y, src.z); // mirror end-effector target across X
   ikHandles[other].position.copy(dst);
   solveIKForLimb(other, /*fromMirror=*/ true);
 }
@@ -1055,7 +1080,7 @@ function buildOpenPoseBody25({ normalize = true } = {}) {
         worldPos = OP_TO_BONE[label](bonesByName); // e.g., MidHip midpoint
       } else {
         const b = bonesByName.get(OP_TO_BONE[label]);
-        if (b) worldPos = b.getWorldPosition(new THREE.Vector3());
+        if (b) worldPos = b.getWorldPosition(new Vector3());
       }
     }
     // Missing labels (Nose/Eyes/Ears/Toes/Heels) → null → 0,0,0
@@ -1293,7 +1318,7 @@ function setIKMode(limb, mode) {
     const endName = chainForLimb(limb).slice(-1)[0];
     const end = bonesByName.get(endName);
     scene.updateMatrixWorld(true);
-    ikHandles[limb].position.copy(end.getWorldPosition(new THREE.Vector3()));
+    ikHandles[limb].position.copy(end.getWorldPosition(new Vector3()));
     ikHandles[limb].userData.isIKHandle = true;
     ikHandles[limb].userData.limb = limb;
   } else {
@@ -1332,15 +1357,15 @@ window.addEventListener("keydown", (e) => {
 
 function frameSelected() {
   const obj = tctrl.object || bonesByName.get("Root");
-  const box = new THREE.Box3().setFromObject(obj);
-  const size = new THREE.Vector3();
+  const box = new Box3().setFromObject(obj);
+  const size = new Vector3();
   box.getSize(size);
-  const center = new THREE.Vector3();
+  const center = new Vector3();
   box.getCenter(center);
   orbit.target.copy(center);
   const dist = Math.max(size.x, size.y, size.z) * 2 + 0.5;
   if (camera.isPerspectiveCamera) {
-    const dir = new THREE.Vector3()
+    const dir = new Vector3()
       .subVectors(camera.position, orbit.target)
       .normalize();
     camera.position.copy(orbit.target).addScaledVector(dir, dist);
