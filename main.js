@@ -97,7 +97,7 @@ rim.position.set(-3, 3, -3);
 scene.add(rim);
 
 // Grid & axes
-const grid = new GridHelper(5, 20, 0x26406d, 0x1c2947);
+const grid = new GridHelper(5, 20, 0x808080, 0x000000);
 grid.position.y = 0;
 scene.add(grid);
 let gridVisible = true;
@@ -1017,10 +1017,10 @@ function refreshThumbs() {
     butContainer.className = "button-container";
     const del = document.createElement("button");
     del.textContent = "Delete";
-    del.className = "smaller button";
+    del.className = "button";
     // const over = document.createElement("button");
     // over.textContent = "Overwrite";
-    // over.className = "smaller button";
+    // over.className = "button";
     card.appendChild(img);
     cap.appendChild(name);
     cap.appendChild(butContainer);
