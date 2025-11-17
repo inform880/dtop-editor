@@ -28,7 +28,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { SkeletonHelper } from './customSkeletonHelper.js';
 
-const errorToast = (text, isError) =>
+const triggerToast = (text, isError) =>
   Toastify({
     text: text,
     duration: 3000,
@@ -480,7 +480,7 @@ function buildTree() {
     btn.textContent = name;
     btn.onclick = () => selectBoneByName(name);
     btn.id = `tree-${name}`;
-    btn.classList = "button"
+    btn.classList = "chip-button"
 
     label.appendChild(icon);
     label.appendChild(btn);
@@ -1173,6 +1173,8 @@ function exportOpenPoseJSON({ normalize = true } = {}) {
   a.download = `openpose_body25_${normalize ? "norm01" : "px"}_${ts}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
+
+  triggerToast(`Saved ${a.download} to downloads`, false);
 }
 
 function exportOpenPoseClipboard({ normalize = true } = {}) {
@@ -1188,10 +1190,10 @@ function exportOpenPoseClipboard({ normalize = true } = {}) {
   };
   navigator.clipboard.writeText(JSON.stringify(payload)).then(
     () => {
-      errorToast("Copied OpenPose JSON to clipboard!", false);
+      triggerToast("Copied OpenPose JSON to clipboard!", false);
     },
     () => {
-      errorToast("Failed to copy OpenPose JSON to clipboard.", true);
+      triggerToast("Failed to copy OpenPose JSON to clipboard.", true);
     }
   );
 }
@@ -1239,6 +1241,7 @@ byId("export-library").onclick = () => {
   a.download = "pose-library.json";
   a.click();
   URL.revokeObjectURL(a.href);
+  triggerToast(`Saved ${a.download} to downloads`, false);
 };
 byId("import-library").onchange = (e) => {
   const file = e.target.files[0];

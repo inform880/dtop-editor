@@ -106,13 +106,14 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
+  font-size: medium;
 }
 
 .app {
   display: grid;
   height: 100%;
   grid-template-columns: var(--left-w) 1fr var(--right-w);
-  grid-template-rows: var(--top-h) 1fr 1fr;
+  grid-template-rows: auto 1fr 1fr;
   grid-template-areas: "top top top"
     "left center rightmiddle"
     "left center rightbottom";
@@ -126,7 +127,7 @@ body {
   border: 1px solid var(--line);
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  padding: 8px;
   border-radius: var(--radius);
   overflow-x: auto;
 }
@@ -186,7 +187,7 @@ h4 {
 .row {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   /* align-items: center; */
 
   margin: 6px 0;
@@ -195,7 +196,8 @@ h4 {
 .row label {
   /* min-width: 84px; */
   color: var(--muted);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  text-align: center;
 }
 
 .col {
@@ -215,7 +217,7 @@ input[type="text"] {
   padding: 6px 8px;
   color: var(--text);
   max-width: 150px;
-  margin-left: 4px;
+  font-size: 1rem;
 }
 
 select {
@@ -225,6 +227,7 @@ select {
   padding: 6px 8px;
   margin-bottom: 6px;
   color: var(--text);
+  font-size: 1rem;
 }
 
 input[type="checkbox"] {
@@ -246,7 +249,25 @@ input[type="range"] {
   border: 1px solid #1b2335;
   color: var(--text);
   border-radius: var(--radius);
-  padding: 6px;
+  padding: 4px 6px;
+  font-size: 1rem;
+}
+
+button:hover {
+  border-color: #2a3a5f;
+}
+
+button[data-state="active"] {
+  background: #17233d;
+  border-color: var(--accent);
+}
+
+.chip-button {
+  background: #121a2c;
+  border: 1px solid #1b2335;
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 4px 6px;
   text-wrap-mode: nowrap;
 }
 
@@ -281,10 +302,10 @@ button[data-state="active"] {
 }
 
 .divider {
-  width: 1px;
-  height: 28px;
-  background: #1c2333;
-  margin: 0 6px;
+  width: 0.5px;
+  height: 2rem;
+  background-color: var(--viewport-bg);
+  margin: 0 4px;
 }
 
 .pill {
@@ -362,13 +383,12 @@ canvas {
 }
 
 .chip {
-  padding: 4px 6px;
+  padding: 2px 6px;
   background: #11182a;
   border: 1px solid #1b2335;
   border-radius: var(--radius);
   color: #c2cbe0;
-  display: inline-block;
-  margin-left: 16px;
+  margin: 0;
 }
 
 .thumbs {
