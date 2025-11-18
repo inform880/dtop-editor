@@ -27,8 +27,16 @@ import {
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { SkeletonHelper } from './customSkeletonHelper.js';
+const { exists, BaseDirectory, writeTextFile, writeFile, mkdir, readTextFile } = window.__TAURI__.fs;
+const { save, open } = window.__TAURI__.dialog;
+const { openPath } = window.__TAURI__.opener
 
-const triggerToast = (text, isError) =>
+const DTOP_PATH = "DTOP/"
+const DTOP_POSE_PATH = `${DTOP_PATH}poses/`
+const DTOP_SCREENSHOT_PATH = `${DTOP_PATH}screenshots`
+const DTOP_LIBRARY_PATH = `${DTOP_PATH}library_exports`
+
+const triggerToast = (text, isError, destination = null) =>
   Toastify({
     text: text,
     duration: 3000,
@@ -37,9 +45,13 @@ const triggerToast = (text, isError) =>
     position: "left", // `left`, `center` or `right`
     stopOnFocus: true, // Prevents dismissing of toast on hover
     style: {
-      background: isError ? "#ff5353" : "#53b3ff",
+      background: isError ? "#6c0303ff" : "#06005cff",
     },
-    onClick: function () { }, // Callback after click
+    onClick: function () {
+      if (destination) {
+        openPath(destination)
+      }
+    }, // Callback after click
   }).showToast();
 
 // ---------- Utilities ----------
@@ -1008,6 +1020,25 @@ function refreshThumbs() {
     const card = document.createElement("div");
     card.className = "thumb";
     const img = document.createElement("img");
+    const THRESHOLD = 25;
+
+    img.addEventListener("mousemove", (e) => {
+      const { clientX, clientY, currentTarget } = e;
+      const { clientWidth, clientHeight } = currentTarget;
+      const offsetLeft = currentTarget.getBoundingClientRect().left;
+      const offsetTop = currentTarget.getBoundingClientRect().top;
+
+      const horizontal = (clientX - offsetLeft) / clientWidth;
+      const vertical = (clientY - offsetTop) / clientHeight;
+      const rotateX = (THRESHOLD / 2 - horizontal * THRESHOLD).toFixed(2);
+      const rotateY = (vertical * THRESHOLD - THRESHOLD / 2).toFixed(2);
+
+      img.style.transform = `perspective(${clientWidth}px) rotateX(${rotateY}deg) rotateY(${rotateX}deg) scale3d(1, 1, 1)`;
+    });
+    img.addEventListener("mouseleave", (e) => {
+      img.style.transform =
+        `perspective(${e.currentTarget.clientWidth}px) rotateX(0deg) rotateY(0deg)`;
+    });
     img.src = p.thumb || "";
     const cap = document.createElement("div");
     cap.className = "cap";
@@ -1016,39 +1047,40 @@ function refreshThumbs() {
     const butContainer = document.createElement("div");
     butContainer.className = "button-container";
     const del = document.createElement("button");
-    del.textContent = "Delete";
-    del.className = "button";
-    // const over = document.createElement("button");
-    // over.textContent = "Overwrite";
-    // over.className = "button";
+    del.textContent = "X";
+    del.className = "delete-button";
+    const over = document.createElement("button");
+    over.textContent = "Overwrite";
+    over.className = "button";
     card.appendChild(img);
     cap.appendChild(name);
     cap.appendChild(butContainer);
-    // butContainer.appendChild(over);
-    butContainer.appendChild(del);
+    butContainer.appendChild(over);
+    card.appendChild(del);
     card.appendChild(cap);
     card.onclick = (ev) => {
       if (
-        // ev.target === over ||
+        ev.target === over ||
         ev.target === del
       ) {
         return;
       }
       applyPose(p.pose);
       setStatus(`Applied pose: ${p.name}`);
+      byId('pose-name').value = p.name;
     };
-    // over.onclick = (ev) => {
-    //   ev.stopPropagation();
-    //   const lib = loadLibrary();
-    //   lib.poses[idx] = {
-    //     name: p.name,
-    //     pose: currentPoseAsJSON(),
-    //     thumb: captureThumbnail(),
-    //   };
-    //   saveLibrary(lib);
-    //   refreshThumbs();
-    //   setStatus(`Overwrote: ${p.name}`);
-    // };
+    over.onclick = (ev) => {
+      ev.stopPropagation();
+      const lib = loadLibrary();
+      lib.poses[idx] = {
+        name: p.name,
+        pose: currentPoseAsJSON(),
+        thumb: captureThumbnail(),
+      };
+      saveLibrary(lib);
+      refreshThumbs();
+      setStatus(`Overwrote: ${p.name}`);
+    };
     del.onclick = (ev) => {
       ev.stopPropagation();
       const lib = loadLibrary();
@@ -1152,9 +1184,21 @@ function buildOpenPoseBody25({ normalize = true } = {}) {
   return triples;
 }
 
-function exportOpenPoseJSON({ normalize = true } = {}) {
+async function exportOpenPoseJSON({ normalize = true } = {}) {
   // Single-person export compatible with OpenPose JSON
   const pose2d = buildOpenPoseBody25({ normalize });
+  const realpath = await window.__TAURI__.path.homeDir();
+
+  const dirExists = await exists(DTOP_POSE_PATH, {
+    baseDir: BaseDirectory.Home,
+  });
+
+  if (!dirExists) {
+    await mkdir(DTOP_POSE_PATH, {
+      baseDir: BaseDirectory.Home,
+      recursive: true
+    });
+  }
 
   const payload = {
     people: [
@@ -1164,21 +1208,38 @@ function exportOpenPoseJSON({ normalize = true } = {}) {
     ],
   };
 
-  const blob = new Blob([JSON.stringify(payload)], {
-    type: "application/json",
-  });
-  const a = document.createElement("a");
-  const ts = new Date().toISOString().replace(/[:.]/g, "-");
-  a.href = URL.createObjectURL(blob);
-  a.download = `openpose_body25_${normalize ? "norm01" : "px"}_${ts}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  const jsonstring = JSON.stringify(payload)
+  const ts =
+    byId("pose-name").value.trim() ||
+    new Date()
+      .toLocaleString('en-US', {
+        hour12: false,
+        dateStyle: "short",
+        timeStyle: "short"
+      })
+      .replace(/[./:]/g, "-")
+      .replace(', ', "_");
 
-  triggerToast(`Saved ${a.download} to downloads`, false);
+  const filepath = `${realpath}/${DTOP_POSE_PATH}/dtop_${normalize ? "norm" : "px"}_${ts}`;
+
+  const path = await save({
+    defaultPath: filepath,
+    filters: [
+      {
+        name: "pose",
+        extensions: ['json'],
+      },
+    ],
+  });
+  await writeTextFile(
+    path,
+    jsonstring
+  );
+
+  triggerToast(`Pose saved`, false);
 }
 
 function exportOpenPoseClipboard({ normalize = true } = {}) {
-  // Single-person export compatible with OpenPose JSON
   const pose2d = buildOpenPoseBody25({ normalize });
 
   const payload = {
@@ -1210,16 +1271,14 @@ document.getElementById("copy-openpose").onclick = () => {
 byId("save-pose").onclick = () => {
   const name =
     byId("pose-name").value.trim() ||
-    `${new Date()
-      .toLocaleString([], {
-        hour: "numeric",
+    new Date()
+      .toLocaleString('en-US', {
         hour12: false,
-        day: "numeric",
-        month: "numeric",
-        minute: "numeric",
-        second: "numeric",
+        dateStyle: "short",
+        timeStyle: "medium"
       })
-      .replace(", ", "-")}`;
+      .replace(/[./:]/g, "-")
+      .replace(', ', "_");
   const pose = currentPoseAsJSON();
   const thumb = captureThumbnail();
   const lib = loadLibrary();
@@ -1231,34 +1290,67 @@ byId("save-pose").onclick = () => {
   refreshThumbs();
   setStatus(`Saved pose: ${name}`);
 };
-byId("export-library").onclick = () => {
+byId("export-library").onclick = async () => {
   const lib = loadLibrary();
-  const blob = new Blob([JSON.stringify(lib)], {
-    type: "application/json",
+
+  const dirExists = await exists(DTOP_LIBRARY_PATH, {
+    baseDir: BaseDirectory.Home,
   });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "pose-library.json";
-  a.click();
-  URL.revokeObjectURL(a.href);
-  triggerToast(`Saved ${a.download} to downloads`, false);
+
+  if (!dirExists) {
+    await mkdir(DTOP_LIBRARY_PATH, {
+      baseDir: BaseDirectory.Home,
+      recursive: true
+    });
+  }
+
+  const ts = new Date()
+    .toLocaleString('en-US', {
+      hour12: false,
+      dateStyle: "short",
+      timeStyle: "short"
+    })
+    .replace(/[./:]/g, "-")
+    .replace(', ', "_");
+
+  const realpath = await window.__TAURI__.path.homeDir();
+
+  const path = await save({
+    defaultPath: `${realpath}/${DTOP_LIBRARY_PATH}/dtop-pose-library-${ts}.json`,
+    filters: [
+      {
+        name: "pose",
+        extensions: ['json'],
+      },
+    ],
+  });
+
+  await writeTextFile(
+    path,
+    JSON.stringify(lib)
+  );
 };
-byId("import-library").onchange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-      if (!data || !Array.isArray(data.poses)) throw new Error("Invalid file");
-      saveLibrary(data);
-      refreshThumbs();
-      setStatus(`Imported ${data.poses.length} poses`);
-    } catch (err) {
-      alert("Import failed: " + err.message);
-    }
-  };
-  reader.readAsText(file);
+byId("import-library").onclick = async (e) => {
+  const file = await open({
+    multiple: false,
+    directory: false,
+    filters: [
+      {
+        name: 'pose library',
+        extensions: ['json'],
+      },
+    ],
+  });
+  const library = await readTextFile(file);
+  try {
+    const data = JSON.parse(library);
+    if (!data || !Array.isArray(data.poses)) throw new Error("Invalid file");
+    saveLibrary(data);
+    refreshThumbs();
+    setStatus(`Imported ${data.poses.length} poses`);
+  } catch (err) {
+    alert("Import failed: " + err.message);
+  }
 };
 
 refreshThumbs();
@@ -1358,11 +1450,44 @@ byId("symmetry").onclick = (e) => {
   byId("symmetry").dataset.state = symmetryEnabled ? "active" : "";
   mirrorPoseAll();
 };
-byId("screenshot").onclick = () => {
-  const a = document.createElement("a");
-  a.href = renderer.domElement.toDataURL("image/png");
-  a.download = "openpose3d.png";
-  a.click();
+byId("screenshot").onclick = async () => {
+
+  const dirExists = await exists(DTOP_SCREENSHOT_PATH, {
+    baseDir: BaseDirectory.Home,
+  });
+
+  if (!dirExists) {
+    await mkdir(DTOP_SCREENSHOT_PATH, {
+      baseDir: BaseDirectory.Home,
+      recursive: true
+    });
+  }
+
+  const image = renderer.domElement.toDataURL("image/png");
+
+  const byte = await fetch(image).then((res) => res.arrayBuffer());
+
+  const name =
+    byId("pose-name").value.trim() ||
+    new Date()
+      .toLocaleString('en-US', {
+        hour12: false,
+        dateStyle: "short",
+        timeStyle: "short"
+      })
+      .replace(/[./:]/g, "-")
+      .replace(', ', "_");
+
+
+  const realpath = await window.__TAURI__.path.homeDir();
+
+  await writeFile(`${realpath}/${DTOP_SCREENSHOT_PATH}/${name}_openpose_shot.png`, byte, {
+    baseDir: BaseDirectory.Home,
+  });
+
+  const fullpath = `${realpath}/${DTOP_SCREENSHOT_PATH}/${name}_openpose_shot.png`
+
+  triggerToast(`Screenshot saved, click to open`, false, `${fullpath}`)
 };
 
 // ---------- FK/IK toggles UI ----------

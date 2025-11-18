@@ -15,7 +15,7 @@
   --warn: #ffbd4a;
   --danger: #ff5f64;
   --line: #1e356a;
-  --ui-border: 2px solid #1b2335;
+  --ui-border: 2px solid #1b3066;
   --left-w: 180px;
   --right-w: 400px;
   --top-h: 48px;
@@ -265,6 +265,25 @@ button[data-state="active"] {
   border-color: var(--accent);
 }
 
+.delete-button {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  border-radius: 999px;
+  background-color: var(--danger);
+  color: var(--bg);
+  font-size: 1rem;
+  padding: 4px 8px;
+  border: var(--ui-border);
+  border-width: 1px;
+  border-color: crimson;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  border-color: var(--warn);
+}
+
 .chip-button {
   background: #121a2c;
   border: var(--ui-border);
@@ -424,24 +443,32 @@ canvas {
 
 .thumbs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
 }
 
 .thumb {
   background: #0b1020;
   border: var(--ui-border);
+  border-width: 0;
   border-radius: var(--radius);
-  overflow: hidden;
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  position: relative;
+  transition: transform 0.2s ease;
 }
 
 .thumb img {
-  width: 100%;
   object-fit: cover;
-  background: #0b0f1c;
+  background: var(--viewport-bg);
+  transition: transform 0.05s ease;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.thumb img:hover {
+  transform: translateZ(12px);
 }
 
 .thumb .cap {
@@ -449,11 +476,11 @@ canvas {
   align-items: center;
   justify-content: space-between;
   flex-direction: column;
-  gap: 4px;
 }
 
 .thumb .cap p {
   margin: 4px;
+  font-size: 0.8rem;
 }
 
 .thumb .cap .button-container {
@@ -463,6 +490,10 @@ canvas {
 
 .thumb .cap .button-container button {
   flex: 1;
+  font-size: 0.8rem;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
+  cursor: pointer;
 }
 
 .danger {
