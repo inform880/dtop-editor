@@ -15,10 +15,12 @@
   --warn: #ffbd4a;
   --danger: #ff5f64;
   --line: #1e356a;
+  --ui-border: 2px solid #1b2335;
   --left-w: 180px;
   --right-w: 400px;
   --top-h: 48px;
   --radius: 8px;
+  --button-radius: 6px;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
 }
 
@@ -212,7 +214,7 @@ h4 {
 input[type="number"],
 input[type="text"] {
   background: #0d1220;
-  border: 1px solid #1b2335;
+  border: var(--ui-border);
   border-radius: var(--radius);
   padding: 6px 8px;
   color: var(--text);
@@ -222,7 +224,7 @@ input[type="text"] {
 
 select {
   background: #0d1220;
-  border: 1px solid #1b2335;
+  border: var(--ui-border);
   border-radius: var(--radius);
   padding: 6px 8px;
   margin-bottom: 6px;
@@ -246,11 +248,12 @@ input[type="range"] {
 
 .button {
   background: #121a2c;
-  border: 1px solid #1b2335;
+  border: var(--ui-border);
   color: var(--text);
   border-radius: var(--radius);
-  padding: 4px 6px;
-  font-size: 1rem;
+  padding: 6px 8px;
+  font-size: 1.1rem;
+  text-wrap-mode: nowrap;
 }
 
 button:hover {
@@ -264,20 +267,46 @@ button[data-state="active"] {
 
 .chip-button {
   background: #121a2c;
-  border: 1px solid #1b2335;
+  border: var(--ui-border);
   color: var(--text);
   border-radius: var(--radius);
-  padding: 4px 6px;
+  padding: 6px 8px;
+  text-wrap-mode: nowrap;
+  font-size: 0.85rem;
+}
+
+.select-button-group {
+  display: flex;
+  align-items: center;
+}
+
+.select-button-group>button {
+  background: #121a2c;
+  color: var(--text);
+  border: var(--ui-border);
+  border-color: #121a2c;
+  padding: 6px 8px;
+  font-size: 1rem;
   text-wrap-mode: nowrap;
 }
 
-button:hover {
-  border-color: #2a3a5f;
+.select-button-group>button:hover {
+  border: 2px solid #2a3a5f;
 }
 
-button[data-state="active"] {
+.select-button-group>button[data-state="active"] {
   background: #17233d;
-  border-color: var(--accent);
+  border: 2px solid var(--accent);
+}
+
+.select-button-group>button:first-child {
+  border-top-left-radius: var(--button-radius);
+  border-bottom-left-radius: var(--button-radius);
+}
+
+.select-button-group>button:last-child {
+  border-top-right-radius: var(--button-radius);
+  border-bottom-right-radius: var(--button-radius);
 }
 
 .split {
@@ -305,7 +334,7 @@ button[data-state="active"] {
   width: 0.5px;
   height: 2rem;
   background-color: var(--viewport-bg);
-  margin: 0 4px;
+  margin: 0 2px;
 }
 
 .pill {
@@ -360,14 +389,16 @@ canvas {
 .tree-item-label {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 2px;
 }
 
 .tree-toggle {
   display: inline-block;
-  width: 0.3em;
   cursor: pointer;
   user-select: none;
+  font-size: smaller;
+  margin: 0;
+  padding: 0;
 }
 
 .tree-children {
@@ -385,7 +416,7 @@ canvas {
 .chip {
   padding: 2px 6px;
   background: #11182a;
-  border: 1px solid #1b2335;
+  border: var(--ui-border);
   border-radius: var(--radius);
   color: #c2cbe0;
   margin: 0;
@@ -399,7 +430,7 @@ canvas {
 
 .thumb {
   background: #0b1020;
-  border: 1px solid #1b2335;
+  border: var(--ui-border);
   border-radius: var(--radius);
   overflow: hidden;
   cursor: pointer;

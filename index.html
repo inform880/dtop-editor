@@ -38,33 +38,31 @@
   <!-- Top toolbar -->
   <div class="topbar">
     <div class="toolbar">
-      <button
-        id="mode-translate"
-        title="Translate (W)"
-        class="button"
-      >Translate</button>
-      <button
-        id="mode-rotate"
-        data-state="active"
-        title="Rotate (E)"
-        class="button"
-      >
-        Rotate
-      </button>
+      <div class="select-button-group">
+        <button
+          id="mode-rotate"
+          data-state="active"
+          title="Rotate (E)"
+        >
+          Rotate
+        </button>
+        <button id="mode-translate" title="Translate (W)">
+          Translate
+        </button>
+      </div>
       <div class="divider"></div>
-      <button
-        id="space-local"
-        data-state="active"
-        title="Local space"
-        class="button"
-      >
-        Local
-      </button>
-      <button
-        id="space-world"
-        class="button"
-        title="World space"
-      >World</button>
+      <div class="select-button-group">
+        <button
+          id="space-local"
+          data-state="active"
+          title="Local space"
+        >
+          Local
+        </button>
+        <button id="space-world" title="World space">
+          World
+        </button>
+      </div>
       <div class="divider"></div>
       <button
         id="reset-pose"
@@ -74,33 +72,28 @@
         Reset
       </button>
       <div class="divider hidden"></div>
+      <div class="select-button-group">
+        <button
+          id="cam-persp"
+          data-state="active"
+          title="Perspective camera"
+        >
+          Perspective
+        </button>
+        <button id="cam-ortho-front" title="Orthographic Front lock">
+          Front
+        </button>
+        <button id="cam-ortho-side" title="Orthographic Side lock">
+          Side
+        </button>
+      </div>
+      <div class="divider"></div>
       <button
         id="symmetry"
         class="button"
         title="Mirror lock across the spine"
-      >Symmetry</button>
-      <div class="divider"></div>
-      <button
-        id="cam-persp"
-        data-state="active"
-        title="Perspective camera"
-        class="button"
       >
-        Persp
-      </button>
-      <button
-        id="cam-ortho-front"
-        class="button"
-        title="Orthographic Front lock"
-      >
-        Ort Front
-      </button>
-      <button
-        id="cam-ortho-side"
-        class="button"
-        title="Orthographic Side lock"
-      >
-        Ort Side
+        Mirror
       </button>
       <div class="divider"></div>
       <button

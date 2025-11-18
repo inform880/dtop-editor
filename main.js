@@ -489,7 +489,7 @@ function buildTree() {
     // --- Children (if any) ---
     const kids = b.children.filter((c) => c.isBone);
     if (kids.length) {
-      icon.textContent = "▼"; // collapsed by default
+      icon.textContent = "▼"; // open by default
 
       const ul = document.createElement("ul");
       ul.classList.add("tree-children"); // start collapsed
@@ -1514,11 +1514,6 @@ ro.observe(viewportEl);
 renderer.domElement.addEventListener("pointermove", () => markPoseDirty());
 document.addEventListener("input", () => markPoseDirty());
 document.addEventListener("change", () => markPoseDirty());
-
-// ---------- Toolbar button states ----------
-function toggleState(el, active) {
-  el.dataset.state = active ? "active" : "";
-}
 
 // Activate gizmo buttons & space buttons
 byId("mode-translate").addEventListener("click", () => setMode("translate"));
